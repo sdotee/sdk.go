@@ -10,6 +10,7 @@ import (
 )
 
 const DefaultBaseURL = "https://api.see.com/v1"
+const DefaultTimeout = 30 * time.Second
 
 // Client represents the SEE SDK client for short URL operations
 type Client struct {
@@ -27,8 +28,14 @@ type Config struct {
 
 // NewClient creates a new SEE SDK client with the given configuration
 func NewClient(config Config) *Client {
+	// Set default BaseURL if not provided
+	if config.BaseURL == "" {
+		config.BaseURL = DefaultBaseURL
+	}
+
+	// Set default timeout if not provided
 	if config.Timeout == 0 {
-		config.Timeout = 30 * time.Second
+		config.Timeout = DefaultTimeout
 	}
 
 	return &Client{
