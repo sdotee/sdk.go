@@ -9,23 +9,23 @@ import (
 	"time"
 )
 
-const DEFAULT_BASE_URL = "https://api.see.com/v1"
+const DefaultBaseURL = "https://api.see.com/v1"
 
-// Client 短网址SDK客户端
+// Client represents the SEE SDK client for short URL operations
 type Client struct {
 	BaseURL    string
 	APIKey     string
 	HTTPClient *http.Client
 }
 
-// Config 客户端配置
+// Config contains configuration options for the Client
 type Config struct {
 	BaseURL string
 	APIKey  string
 	Timeout time.Duration
 }
 
-// NewClient 创建新的SDK客户端
+// NewClient creates a new SEE SDK client with the given configuration
 func NewClient(config Config) *Client {
 	if config.Timeout == 0 {
 		config.Timeout = 30 * time.Second
@@ -40,7 +40,7 @@ func NewClient(config Config) *Client {
 	}
 }
 
-// doRequest 执行HTTP请求的通用方法
+// doRequest executes an HTTP request and returns the response body
 func (c *Client) doRequest(method, endpoint string, body any) ([]byte, error) {
 	var reqBody io.Reader
 	if body != nil {
@@ -57,26 +57,26 @@ func (c *Client) doRequest(method, endpoint string, body any) ([]byte, error) {
 		return nil, fmt.Errorf("create request: %w", err)
 	}
 
-	// 设置请求头
+	// Set request headers
 	req.Header.Set("Content-Type", "application/json")
 	if c.APIKey != "" {
 		req.Header.Set("Authorization", c.APIKey)
 	}
 
-	// 执行请求
+	// Execute the request
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("execute request: %w", err)
 	}
 	defer resp.Body.Close()
 
-	// 读取响应
+	// Read response body
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("read response: %w", err)
 	}
 
-	// 检查HTTP状态码
+	// Check HTTP status code
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return nil, fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(respBody))
 	}

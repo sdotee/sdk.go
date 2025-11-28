@@ -1,18 +1,18 @@
 package seesdk
 
-// CreateShortURLRequest 创建短网址请求
+// CreateShortURLRequest represents a request to create a short URL
 type CreateShortURLRequest struct {
 	CustomSlug            string  `json:"custom_slug,omitempty"`
 	Domain                string  `json:"domain"`
 	ExpirationRedirectURL string  `json:"expiration_redirect_url,omitempty"`
-	ExpireAt              int64   `json:"expire_at,omitempty"` // unix timestamp (seconds)
+	ExpireAt              int64   `json:"expire_at,omitempty"` // Unix timestamp in seconds
 	Password              string  `json:"password,omitempty"`
 	TagIDs                []int64 `json:"tag_ids,omitempty"`
 	TargetURL             string  `json:"target_url"`
 	Title                 string  `json:"title,omitempty"`
 }
 
-// CreateShortURLResponse 创建短网址响应
+// CreateShortURLResponse represents the response from creating a short URL
 type CreateShortURLResponse struct {
 	Code int `json:"code"`
 	Data struct {
@@ -23,32 +23,35 @@ type CreateShortURLResponse struct {
 	Message string `json:"message"`
 }
 
-// DeleteURLRequest 删除短网址请求
+// DeleteURLRequest represents a request to delete a short URL
 type DeleteURLRequest struct {
 	Domain string `json:"domain"`
 	Slug   string `json:"slug"`
 }
 
-// DeleteURLResponse 删除短网址响应
+// DeleteURLResponse represents the response from deleting a short URL
 type DeleteURLResponse struct {
 	Code    int    `json:"code"`
 	Data    any    `json:"data,omitempty"`
 	Message string `json:"message"`
 }
 
+// UpdateShortURLRequest represents a request to update a short URL
 type UpdateShortURLRequest struct {
 	Domain    string `json:"domain"`
 	Slug      string `json:"slug"`
-	TargetUrl string `json:"target_url"`
+	TargetURL string `json:"target_url"`
 	Title     string `json:"title"`
 }
 
+// UpdateShortURLResponse represents the response from updating a short URL
 type UpdateShortURLResponse struct {
 	Code    int    `json:"code"`
 	Data    any    `json:"data"`
 	Message string `json:"message"`
 }
 
+// DomainsResponse represents the response containing available domains
 type DomainsResponse struct {
 	Code int `json:"code"`
 	Data struct {
@@ -57,11 +60,13 @@ type DomainsResponse struct {
 	Message string `json:"message"`
 }
 
+// Tag represents a tag entity
 type Tag struct {
-	Id   int    `json:"id"`
+	ID   int    `json:"id"`
 	Name string `json:"name"`
 }
 
+// TagsResponse represents the response containing available tags
 type TagsResponse struct {
 	Code int `json:"code"`
 	Data struct {

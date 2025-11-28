@@ -6,18 +6,18 @@ import (
 )
 
 func TestNewClient(t *testing.T) {
-	baseUrl := DEFAULT_BASE_URL
+	baseURL := DefaultBaseURL
 
 	if os.Getenv("SEE_API_KEY") == "" {
 		t.Skip("SEE_API_KEY not set, skipping integration test")
 	}
 
 	if os.Getenv("SEE_BASE_URL") != "" {
-		baseUrl = os.Getenv("SEE_BASE_URL")
+		baseURL = os.Getenv("SEE_BASE_URL")
 	}
 
 	client := NewClient(Config{
-		BaseURL: baseUrl,
+		BaseURL: baseURL,
 		APIKey:  os.Getenv("SEE_API_KEY"),
 	})
 
@@ -60,7 +60,7 @@ func TestNewClient(t *testing.T) {
 		Domain:    "a.see-test.com",
 		Slug:      response.Data.Slug,
 		Title:     "Google",
-		TargetUrl: "https://www.google.com/search?q=see+sdk",
+		TargetURL: "https://www.google.com/search?q=see+sdk",
 	})
 
 	if err != nil {

@@ -32,7 +32,7 @@ func main() {
 	}
 	fmt.Printf("Available tags:\n")
 	for _, tag := range tagsResp.Data.Tags {
-		fmt.Printf("  - ID: %d, Name: %s\n", tag.Id, tag.Name)
+		fmt.Printf("  - ID: %d, Name: %s\n", tag.ID, tag.Name)
 	}
 	fmt.Println()
 
@@ -86,7 +86,7 @@ func main() {
 	updateResp, err := client.UpdateShortURL(seesdk.UpdateShortURLRequest{
 		Domain:    "example.com",
 		Slug:      createResp.Data.Slug,
-		TargetUrl: "https://www.example.com/updated",
+		TargetURL: "https://www.example.com/updated",
 		Title:     "Updated Link",
 	})
 	if err != nil {
