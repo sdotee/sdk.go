@@ -1,0 +1,107 @@
+package main
+
+import (
+	"fmt"
+	"log"
+	"time"
+
+	seesdk "github.com/sdotee/sdk.go"
+)
+
+func main() {
+	// Create SDK client
+	client := seesdk.NewClient(seesdk.Config{
+		BaseURL: "https://api.example.com", // Replace with actual API URL
+		APIKey:  "your-api-key-here",       // Replace with actual API key
+		Timeout: 30 * time.Second,
+	})
+
+	// Example 1: Get available domains
+	fmt.Println("=== Get Domains ===")
+	domainsResp, err := client.GetDomains()
+	if err != nil {
+		log.Fatalf("Failed to get domains: %v", err)
+	}
+	fmt.Printf("Available domains: %v\n\n", domainsResp.Data.Domains)
+
+	// Example 2: Get available tags
+	fmt.Println("=== Get Tags ===")
+	tagsResp, err := client.GetTags()
+	if err != nil {
+		log.Fatalf("Failed to get tags: %v", err)
+	}
+	fmt.Printf("Available tags:\n")
+	for _, tag := range tagsResp.Data.Tags {
+		fmt.Printf("  - ID: %d, Name: %s\n", tag.Id, tag.Name)
+	}
+	fmt.Println()
+
+	// Example 3: Create short URL with basic settings
+	fmt.Println("=== Create Short URL ===")
+	createResp, err := client.CreateShortURL(seesdk.CreateShortURLRequest{
+		TargetURL: "https://www.example.com/very/long/url/path",
+		Domain:    "example.com", // Use one of the available domains
+		Title:     "Example Link",
+	})
+	if err != nil {
+		log.Fatalf("Failed to create short URL: %v", err)
+	}
+	fmt.Printf("Response Code: %d\n", createResp.Code)
+	fmt.Printf("Message: %s\n", createResp.Message)
+	fmt.Printf("Slug: %s\n", createResp.Data.Slug)
+	fmt.Printf("Short URL: %s\n\n", createResp.Data.ShortURL)
+
+	// Example 4: Create custom short URL with expiration
+	fmt.Println("=== Create Custom Short URL ===")
+	expireAt := time.Now().Add(30 * 24 * time.Hour).Unix() // Expires in 30 days
+	customResp, err := client.CreateShortURL(seesdk.CreateShortURLRequest{
+		TargetURL:  "https://www.example.com/custom",
+		Domain:     "example.com",
+		CustomSlug: "my-custom-code",
+		ExpireAt:   expireAt,
+		Title:      "Custom Link",
+		TagIDs:     []int64{1, 2}, // Use actual tag IDs
+	})
+	if err != nil {
+		log.Fatalf("Failed to create custom short URL: %v", err)
+	}
+	fmt.Printf("Custom Slug: %s\n", customResp.Data.CustomSlug)
+	fmt.Printf("Short URL: %s\n\n", customResp.Data.ShortURL)
+
+	// Example 5: Create password-protected short URL
+	fmt.Println("=== Create Password-Protected Short URL ===")
+	protectedResp, err := client.CreateShortURL(seesdk.CreateShortURLRequest{
+		TargetURL: "https://www.example.com/protected",
+		Domain:    "example.com",
+		Password:  "secret123",
+		Title:     "Protected Link",
+	})
+	if err != nil {
+		log.Fatalf("Failed to create protected short URL: %v", err)
+	}
+	fmt.Printf("Protected Short URL: %s\n\n", protectedResp.Data.ShortURL)
+
+	// Example 6: Update short URL
+	fmt.Println("=== Update Short URL ===")
+	updateResp, err := client.UpdateShortURL(seesdk.UpdateShortURLRequest{
+		Domain:    "example.com",
+		Slug:      createResp.Data.Slug,
+		TargetUrl: "https://www.example.com/updated",
+		Title:     "Updated Link",
+	})
+	if err != nil {
+		log.Fatalf("Failed to update short URL: %v", err)
+	}
+	fmt.Printf("Update successful: %s\n\n", updateResp.Message)
+
+	// Example 7: Delete short URL
+	fmt.Println("=== Delete Short URL ===")
+	deleteResp, err := client.DeleteShortURL(seesdk.DeleteURLRequest{
+		Domain: "example.com",
+		Slug:   createResp.Data.Slug,
+	})
+	if err != nil {
+		log.Fatalf("Failed to delete URL: %v", err)
+	}
+	fmt.Printf("Delete successful: %s\n", deleteResp.Message)
+}
