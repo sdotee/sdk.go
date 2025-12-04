@@ -1,6 +1,20 @@
+//
+// Copyright (c) 2025 S.EE Development Team
+//
+// This source code is licensed under the MIT License,
+// which is located in the LICENSE file in the source tree's root directory.
+//
+// File: models.go
+// Author: S.EE Development Team <dev@s.ee>
+// File Created: 2025-11-28 11:26:17
+//
+// Modified By: S.EE Development Team <dev@s.ee>
+// Last Modified: 2025-12-04 17:59:18
+//
+
 package seesdk
 
-// CreateShortURLRequest represents a request to create a short URL
+// CreateShortURLRequest represents a request to create a short URL.
 type CreateShortURLRequest struct {
 	CustomSlug            string  `json:"custom_slug,omitempty"`
 	Domain                string  `json:"domain"`
@@ -12,7 +26,7 @@ type CreateShortURLRequest struct {
 	Title                 string  `json:"title,omitempty"`
 }
 
-// CreateShortURLResponse represents the response from creating a short URL
+// CreateShortURLResponse represents the response from creating a short URL.
 type CreateShortURLResponse struct {
 	Code int `json:"code"`
 	Data struct {
@@ -23,20 +37,20 @@ type CreateShortURLResponse struct {
 	Message string `json:"message"`
 }
 
-// DeleteURLRequest represents a request to delete a short URL
+// DeleteURLRequest represents a request to delete a short URL.
 type DeleteURLRequest struct {
 	Domain string `json:"domain"`
 	Slug   string `json:"slug"`
 }
 
-// DeleteURLResponse represents the response from deleting a short URL
+// DeleteURLResponse represents the response from deleting a short URL.
 type DeleteURLResponse struct {
 	Code    int    `json:"code"`
 	Data    any    `json:"data,omitempty"`
 	Message string `json:"message"`
 }
 
-// UpdateShortURLRequest represents a request to update a short URL
+// UpdateShortURLRequest represents a request to update a short URL.
 type UpdateShortURLRequest struct {
 	Domain    string `json:"domain"`
 	Slug      string `json:"slug"`
@@ -44,14 +58,14 @@ type UpdateShortURLRequest struct {
 	Title     string `json:"title"`
 }
 
-// UpdateShortURLResponse represents the response from updating a short URL
+// UpdateShortURLResponse represents the response from updating a short URL.
 type UpdateShortURLResponse struct {
 	Code    int    `json:"code"`
 	Data    any    `json:"data"`
 	Message string `json:"message"`
 }
 
-// DomainsResponse represents the response containing available domains
+// DomainsResponse represents the response containing available domains.
 type DomainsResponse struct {
 	Code int `json:"code"`
 	Data struct {
@@ -60,13 +74,13 @@ type DomainsResponse struct {
 	Message string `json:"message"`
 }
 
-// Tag represents a tag entity
+// Tag represents a tag entity.
 type Tag struct {
 	ID   int    `json:"id"`
 	Name string `json:"name"`
 }
 
-// TagsResponse represents the response containing available tags
+// TagsResponse represents the response containing available tags.
 type TagsResponse struct {
 	Code int `json:"code"`
 	Data struct {

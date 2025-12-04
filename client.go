@@ -1,3 +1,17 @@
+//
+// Copyright (c) 2025 S.EE Development Team
+//
+// This source code is licensed under the MIT License,
+// which is located in the LICENSE file in the source tree's root directory.
+//
+// File: client.go
+// Author: S.EE Development Team <dev@s.ee>
+// File Created: 2025-11-28 11:21:45
+//
+// Modified By: S.EE Development Team <dev@s.ee>
+// Last Modified: 2025-12-04 18:00:16
+//
+
 package seesdk
 
 import (
@@ -26,14 +40,11 @@ type Config struct {
 	Timeout time.Duration
 }
 
-// NewClient creates a new SEE SDK client with the given configuration
+// NewClient creates a new SEE SDK client with the given configuration.
 func NewClient(config Config) *Client {
-	// Set default BaseURL if not provided
 	if config.BaseURL == "" {
 		config.BaseURL = DefaultBaseURL
 	}
-
-	// Set default timeout if not provided
 	if config.Timeout == 0 {
 		config.Timeout = DefaultTimeout
 	}
@@ -47,7 +58,7 @@ func NewClient(config Config) *Client {
 	}
 }
 
-// doRequest executes an HTTP request and returns the response body
+// doRequest executes an HTTP request and returns the response body.
 func (c *Client) doRequest(method, endpoint string, body any) ([]byte, error) {
 	var reqBody io.Reader
 	if body != nil {
@@ -64,26 +75,22 @@ func (c *Client) doRequest(method, endpoint string, body any) ([]byte, error) {
 		return nil, fmt.Errorf("create request: %w", err)
 	}
 
-	// Set request headers
 	req.Header.Set("Content-Type", "application/json")
 	if c.APIKey != "" {
 		req.Header.Set("Authorization", c.APIKey)
 	}
 
-	// Execute the request
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("execute request: %w", err)
 	}
 	defer resp.Body.Close()
 
-	// Read response body
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("read response: %w", err)
 	}
 
-	// Check HTTP status code
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return nil, fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(respBody))
 	}
