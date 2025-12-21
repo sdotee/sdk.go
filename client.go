@@ -23,7 +23,7 @@ import (
 	"time"
 )
 
-const DefaultBaseURL = "https://api.see.com/v1"
+const DefaultBaseURL = "https://s.ee/api/v1"
 const DefaultTimeout = 30 * time.Second
 
 // Client represents the SEE SDK client for short URL operations

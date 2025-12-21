@@ -98,3 +98,73 @@ func TestNewClient(t *testing.T) {
 		t.Errorf("Expected delete response code 200, got: %d", result.Code)
 	}
 }
+
+func TestTextOperations(t *testing.T) {
+	baseURL := DefaultBaseURL
+
+	if os.Getenv("SEE_API_KEY") == "" {
+		t.Skip("SEE_API_KEY not set, skipping integration test")
+	}
+
+	if os.Getenv("SEE_BASE_URL") != "" {
+		baseURL = os.Getenv("SEE_BASE_URL")
+	}
+
+	client := NewClient(Config{
+		BaseURL: baseURL,
+		APIKey:  os.Getenv("SEE_API_KEY"),
+	})
+
+	if client == nil {
+		t.Fatal("Expected client to be created")
+	}
+
+	// 1. Create Text
+	createResp, err := client.CreateText(CreateTextRequest{
+		Domain:  "ba.sh",
+		Content: "Hello, World! This is a test text.",
+		Title:   "Test Text",
+	})
+
+	if err != nil {
+		t.Fatal("Expected no error on create text, got:", err)
+	}
+
+	if createResp.Code != 200 {
+		t.Errorf("Expected create response code 200, got: %d", createResp.Code)
+	}
+
+	if createResp.Data.Slug == "" {
+		t.Fatal("Expected slug to be returned")
+	}
+
+	// 2. Update Text
+	updateResp, err := client.UpdateText(UpdateTextRequest{
+		Domain:  "ba.sh",
+		Slug:    createResp.Data.Slug,
+		Content: "Hello, World! This is an updated test text.",
+		Title:   "Updated Test Text",
+	})
+
+	if err != nil {
+		t.Fatal("Expected no error on update text, got:", err)
+	}
+
+	if updateResp.Code != 200 {
+		t.Errorf("Expected update response code 200, got: %d", updateResp.Code)
+	}
+
+	// 3. Delete Text
+	deleteResp, err := client.DeleteText(DeleteTextRequest{
+		Domain: "ba.sh",
+		Slug:   createResp.Data.Slug,
+	})
+
+	if err != nil {
+		t.Fatal("Expected no error on delete text, got:", err)
+	}
+
+	if deleteResp.Code != 200 {
+		t.Errorf("Expected delete response code 200, got: %d", deleteResp.Code)
+	}
+}

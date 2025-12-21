@@ -26,6 +26,17 @@ type CreateShortURLRequest struct {
 	Title                 string  `json:"title,omitempty"`
 }
 
+type CreateTextRequest struct {
+	Content    string  `json:"content"`
+	CustomSlug string  `json:"custom_slug,omitempty"`
+	Domain     string  `json:"domain,omitempty"`
+	ExpireAt   int64   `json:"expire_at,omitempty"` // Unix timestamp in seconds
+	Password   string  `json:"password,omitempty"`
+	TagIDs     []int64 `json:"tag_ids,omitempty"`
+	TextType   string  `json:"text_type,omitempty"`
+	Title      string  `json:"title,omitempty"`
+}
+
 // CreateShortURLResponse represents the response from creating a short URL.
 type CreateShortURLResponse struct {
 	Code int `json:"code"`
@@ -37,8 +48,24 @@ type CreateShortURLResponse struct {
 	Message string `json:"message"`
 }
 
+type CreateTextResponse struct {
+	Code int `json:"code"`
+	Data struct {
+		CustomSlug string `json:"custom_slug"`
+		ShortURL   string `json:"short_url"`
+		Slug       string `json:"slug"`
+	}
+	Message string `json:"message"`
+}
+
 // DeleteURLRequest represents a request to delete a short URL.
 type DeleteURLRequest struct {
+	Domain string `json:"domain"`
+	Slug   string `json:"slug"`
+}
+
+// DeleteTextRequest represents a request to delete a text.
+type DeleteTextRequest struct {
 	Domain string `json:"domain"`
 	Slug   string `json:"slug"`
 }
@@ -50,6 +77,18 @@ type DeleteURLResponse struct {
 	Message string `json:"message"`
 }
 
+// DeleteTextResponse represents the response from deleting a text.
+type DeleteTextResponse struct {
+	Code int `json:"code"`
+	Data struct {
+		Tags []struct {
+			Id   int    `json:"id"`
+			Name string `json:"name"`
+		}
+	} `json:"data"`
+	Message string `json:"message"`
+}
+
 // UpdateShortURLRequest represents a request to update a short URL.
 type UpdateShortURLRequest struct {
 	Domain    string `json:"domain"`
@@ -58,10 +97,29 @@ type UpdateShortURLRequest struct {
 	Title     string `json:"title"`
 }
 
+type UpdateTextRequest struct {
+	Domain  string `json:"domain"`
+	Slug    string `json:"slug"`
+	Content string `json:"content"`
+	Title   string `json:"title,omitempty"`
+}
+
 // UpdateShortURLResponse represents the response from updating a short URL.
 type UpdateShortURLResponse struct {
 	Code    int    `json:"code"`
 	Data    any    `json:"data"`
+	Message string `json:"message"`
+}
+
+// UpdateTextResponse represents the response from updating a text.
+type UpdateTextResponse struct {
+	Code int `json:"code"`
+	Data struct {
+		Tags []struct {
+			Id   int    `json:"id"`
+			Name string `json:"name"`
+		}
+	} `json:"data"`
 	Message string `json:"message"`
 }
 

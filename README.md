@@ -5,7 +5,8 @@ Official Golang SDK for [S.EE](https://s.ee) URL shortener service. Create, mana
 ## Features
 
 - 🔗 Create short URLs with custom slugs
-- 🔒 Password-protected links
+- 📝 Create text/paste with syntax highlighting
+- �🔒 Password-protected links
 - ⏰ Expiration time support
 - 🏷️ Tag management for organization
 - 🌐 Multiple domain support
@@ -36,7 +37,9 @@ Create your first short URL:
 resp, err := client.CreateShortURL(seesdk.CreateShortURLRequest{
     TargetURL: "https://www.example.com/very/long/url",
     Domain:    "s.ee",
-    Title:     "My Link",
+    BaseCreateRequest: seesdk.BaseCreateRequest{
+        Title: "My Link",
+    },
 })
 
 fmt.Printf("Short URL: %s\n", resp.Data.ShortURL)
@@ -68,11 +71,13 @@ expireAt := time.Now().Add(30 * 24 * time.Hour).Unix()
 resp, err := client.CreateShortURL(seesdk.CreateShortURLRequest{
     TargetURL:  "https://www.example.com/campaign",
     Domain:     "s.ee",
-    CustomSlug: "summer-sale",
-    ExpireAt:   expireAt,
-    Password:   "secret123",
-    Title:      "Summer Sale Campaign",
-    TagIDs:     []int64{1, 2},
+    BaseCreateRequest: seesdk.BaseCreateRequest{
+        CustomSlug: "summer-sale",
+        ExpireAt:   expireAt,
+        Password:   "secret123",
+        Title:      "Summer Sale Campaign",
+        TagIDs:     []int64{1, 2},
+    },
 })
 ```
 
@@ -81,17 +86,49 @@ resp, err := client.CreateShortURL(seesdk.CreateShortURLRequest{
 ```go
 // Update existing short URL
 client.UpdateShortURL(seesdk.UpdateShortURLRequest{
-    Domain:    "s.ee",
-    Slug:      "summer-sale",
-    TargetUrl: "https://www.example.com/new-campaign",
+    BaseSlugRequest: seesdk.BaseSlugRequest{
+        Domain: "s.ee",
+        Slug:   "summer-sale",
+    },
+    TargetURL: "https://www.example.com/new-campaign",
     Title:     "Updated Campaign",
 })
 
 // Delete short URL
 client.DeleteShortURL(seesdk.DeleteURLRequest{
-    Domain: "s.ee",
-    Slug:   "summer-sale",
+    BaseSlugRequest: seesdk.BaseSlugRequest{
+        Domain: "s.ee",
+        Slug:   "summer-sale",
+    },
 })
+
+### Text Management
+
+```go
+// Create a new text/paste
+textResp, err := client.CreateText(seesdk.CreateTextRequest{
+    Content:    "fmt.Println(\"Hello World\")",
+    Domain:     "s.ee",
+    Title:      "Go Hello World",
+    TextType:   "go", // Syntax highlighting
+    CustomSlug: "hello-go",
+})
+fmt.Printf("Text URL: %s\n", textResp.Data.ShortURL)
+
+// Update text
+client.UpdateText(seesdk.UpdateTextRequest{
+    Domain:  "s.ee",
+    Slug:    "hello-go",
+    Content: "fmt.Println(\"Hello Updated World\")",
+    Title:   "Updated Go Hello World",
+})
+
+// Delete text
+client.DeleteText(seesdk.DeleteTextRequest{
+    Domain: "s.ee",
+    Slug:   "hello-go",
+})
+```
 ```
 
 ## API Reference
@@ -111,6 +148,12 @@ client.DeleteShortURL(seesdk.DeleteURLRequest{
 **UpdateShortURL(req UpdateShortURLRequest)** - Modify an existing short URL
 
 **DeleteShortURL(req DeleteURLRequest)** - Remove a short URL
+
+**CreateText(req CreateTextRequest)** - Create a new text entry
+
+**UpdateText(req UpdateTextRequest)** - Modify an existing text entry
+
+**DeleteText(req DeleteTextRequest)** - Remove a text entry
 
 **GetDomains()** - List available domains
 
@@ -141,6 +184,35 @@ client.DeleteShortURL(seesdk.DeleteURLRequest{
 | Title     | string | No       |
 
 **DeleteURLRequest**
+
+| Field  | Type   | Required |
+| ------ | ------ | -------- |
+| Domain | string | Yes      |
+| Slug   | string | Yes      |
+
+**CreateTextRequest**
+
+| Field      | Type    | Required | Description              |
+| ---------- | ------- | -------- | ------------------------ |
+| Content    | string  | Yes      | Text content             |
+| Domain     | string  | No       | Short domain name        |
+| CustomSlug | string  | No       | Custom URL slug          |
+| TextType   | string  | No       | Syntax highlighting type |
+| Title      | string  | No       | Text title               |
+| Password   | string  | No       | Access password          |
+| ExpireAt   | int64   | No       | Unix timestamp (seconds) |
+| TagIDs     | []int64 | No       | Associated tag IDs       |
+
+**UpdateTextRequest**
+
+| Field   | Type   | Required |
+| ------- | ------ | -------- |
+| Domain  | string | Yes      |
+| Slug    | string | Yes      |
+| Content | string | Yes      |
+| Title   | string | No       |
+
+**DeleteTextRequest**
 
 | Field  | Type   | Required |
 | ------ | ------ | -------- |

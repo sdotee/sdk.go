@@ -101,3 +101,48 @@ func (c *Client) GetTags() (*TagsResponse, error) {
 
 	return &response, nil
 }
+
+// CreateText creates a new text entry with the given parameters.
+func (c *Client) CreateText(req CreateTextRequest) (*CreateTextResponse, error) {
+	respBody, err := c.doRequest("POST", "/text", req)
+	if err != nil {
+		return nil, err
+	}
+
+	var response CreateTextResponse
+	if err := unmarshalResponse(respBody, &response); err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
+// UpdateText updates an existing text entry.
+func (c *Client) UpdateText(req UpdateTextRequest) (*UpdateTextResponse, error) {
+	respBody, err := c.doRequest("PUT", "/text", req)
+	if err != nil {
+		return nil, err
+	}
+
+	var response UpdateTextResponse
+	if err := unmarshalResponse(respBody, &response); err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
+// DeleteText deletes an existing text entry.
+func (c *Client) DeleteText(req DeleteTextRequest) (*DeleteTextResponse, error) {
+	respBody, err := c.doRequest("DELETE", "/text", req)
+	if err != nil {
+		return nil, err
+	}
+
+	var response DeleteTextResponse
+	if err := unmarshalResponse(respBody, &response); err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
