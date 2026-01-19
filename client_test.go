@@ -258,11 +258,16 @@ func TestGetFileDomains(t *testing.T) {
 		t.Fatal("Expected no error, got:", err)
 	}
 
-	if domains.Code != 0 {
+	if domains.Code != 200 {
 		t.Errorf("Expected response code 0, got: %d", domains.Code)
 	}
 
 	if len(domains.Data.Domains) == 0 {
 		t.Fatal("Expected at least one file domain, got zero")
+	}
+
+	fmt.Println("Available file domains:")
+	for _, domain := range domains.Data.Domains {
+		fmt.Printf(" - %s\n", domain)
 	}
 }
