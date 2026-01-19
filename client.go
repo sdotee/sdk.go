@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"time"
 )
@@ -76,6 +77,56 @@ func (c *Client) doRequest(method, endpoint string, body any) ([]byte, error) {
 	}
 
 	req.Header.Set("Content-Type", "application/json")
+	if c.APIKey != "" {
+		req.Header.Set("Authorization", c.APIKey)
+	}
+
+	resp, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("execute request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("read response: %w", err)
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(respBody))
+	}
+
+	return respBody, nil
+}
+
+// doMultipartRequest executes a multipart HTTP request.
+func (c *Client) doMultipartRequest(endpoint string, fieldName, filename string, r io.Reader) ([]byte, error) {
+	pr, pw := io.Pipe()
+	writer := multipart.NewWriter(pw)
+
+	go func() {
+		defer pw.Close()
+		part, err := writer.CreateFormFile(fieldName, filename)
+		if err != nil {
+			_ = pw.CloseWithError(fmt.Errorf("create form file: %w", err))
+			return
+		}
+		if _, err := io.Copy(part, r); err != nil {
+			_ = pw.CloseWithError(fmt.Errorf("copy file content: %w", err))
+			return
+		}
+		if err := writer.Close(); err != nil {
+			_ = pw.CloseWithError(fmt.Errorf("close writer: %w", err))
+		}
+	}()
+
+	url := c.BaseURL + endpoint
+	req, err := http.NewRequest("POST", url, pr)
+	if err != nil {
+		return nil, fmt.Errorf("create request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", writer.FormDataContentType())
 	if c.APIKey != "" {
 		req.Header.Set("Authorization", c.APIKey)
 	}

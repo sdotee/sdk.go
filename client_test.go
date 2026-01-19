@@ -15,8 +15,10 @@
 package seesdk
 
 import (
+	"fmt"
 	"os"
 	"testing"
+	"time"
 )
 
 func TestNewClient(t *testing.T) {
@@ -166,5 +168,101 @@ func TestTextOperations(t *testing.T) {
 
 	if deleteResp.Code != 200 {
 		t.Errorf("Expected delete response code 200, got: %d", deleteResp.Code)
+	}
+}
+
+func TestUploadFile(t *testing.T) {
+	if os.Getenv("SEE_API_KEY") == "" {
+		t.Skip("SEE_API_KEY not set, skipping integration test")
+	}
+
+	baseURL := DefaultBaseURL
+	if os.Getenv("SEE_BASE_URL") != "" {
+		baseURL = os.Getenv("SEE_BASE_URL")
+	}
+
+	client := NewClient(Config{
+		BaseURL: baseURL,
+		APIKey:  os.Getenv("SEE_API_KEY"),
+	})
+
+	// Create a temporary file
+	tmpfile, err := os.CreateTemp("", "example.*.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(tmpfile.Name()) // clean up
+
+	// Use unique content to avoid duplicates on server side
+	content := []byte(fmt.Sprintf("Hello, S.EE! %d", time.Now().UnixNano()))
+	if _, err := tmpfile.Write(content); err != nil {
+		t.Fatal(err)
+	}
+	if err := tmpfile.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	// Open the file for reading
+	file, err := os.Open(tmpfile.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer file.Close()
+
+	// Upload the file
+	resp, err := client.UploadFile("test.txt", file)
+	if err != nil {
+		t.Fatal("Expected no error on upload file, got:", err)
+	}
+
+	if resp.Code != 200 {
+		t.Errorf("Expected response code 200, got: %d", resp.Code)
+	}
+
+	if resp.Data.URL == "" {
+		t.Error("Expected URL in response")
+	}
+
+	if resp.Data.Delete == "" {
+		t.Error("Expected Delete key in response")
+	}
+
+	// Delete the file
+	deleteResp, err := client.DeleteFile(resp.Data.Hash)
+	if err != nil {
+		t.Fatal("Expected no error on delete file, got:", err)
+	}
+
+	if !deleteResp.Success {
+		t.Errorf("Expected success true, got false")
+	}
+}
+
+func TestGetFileDomains(t *testing.T) {
+	if os.Getenv("SEE_API_KEY") == "" {
+		t.Skip("SEE_API_KEY not set, skipping integration test")
+	}
+
+	baseURL := DefaultBaseURL
+	if os.Getenv("SEE_BASE_URL") != "" {
+		baseURL = os.Getenv("SEE_BASE_URL")
+	}
+
+	client := NewClient(Config{
+		BaseURL: baseURL,
+		APIKey:  os.Getenv("SEE_API_KEY"),
+	})
+
+	domains, err := client.GetFileDomains()
+	if err != nil {
+		t.Fatal("Expected no error, got:", err)
+	}
+
+	if domains.Code != 0 {
+		t.Errorf("Expected response code 0, got: %d", domains.Code)
+	}
+
+	if len(domains.Data.Domains) == 0 {
+		t.Fatal("Expected at least one file domain, got zero")
 	}
 }

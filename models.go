@@ -97,6 +97,33 @@ type UpdateShortURLRequest struct {
 	Title     string `json:"title"`
 }
 
+// UploadFileResponse represents the response from uploading a file.
+type UploadFileResponse struct {
+	Code int `json:"code"`
+	Data struct {
+		Delete       string `json:"delete"`
+		FileID       int    `json:"file_id"`
+		Filename     string `json:"filename"`
+		Hash         string `json:"hash"`
+		Height       int    `json:"height"`
+		Page         string `json:"page"`
+		Path         string `json:"path"`
+		Size         int    `json:"size"`
+		Storename    string `json:"storename"`
+		UploadStatus int    `json:"upload_status"`
+		URL          string `json:"url"`
+		Width        int    `json:"width"`
+	} `json:"data"`
+	Message string `json:"message"`
+}
+
+// DeleteFileResponse represents the response from deleting a file.
+type DeleteFileResponse struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
+	Success bool   `json:"success"`
+}
+
 type UpdateTextRequest struct {
 	Domain  string `json:"domain"`
 	Slug    string `json:"slug"`

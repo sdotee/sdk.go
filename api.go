@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2025 S.EE Development Team
+// Copyright (c) 2025-2026 S.EE Development Team
 //
 // This source code is licensed under the MIT License,
 // which is located in the LICENSE file in the source tree's root directory.
@@ -17,6 +17,8 @@ package seesdk
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"os"
 )
 
 // unmarshalResponse is a helper function to unmarshal API response.
@@ -145,4 +147,72 @@ func (c *Client) DeleteText(req DeleteTextRequest) (*DeleteTextResponse, error) 
 	}
 
 	return &response, nil
+}
+
+// UploadFile uploads a file to the server.
+func (c *Client) UploadFile(filename string, file io.Reader) (*UploadFileResponse, error) {
+	if file == nil {
+		return nil, fmt.Errorf("file is nil")
+	}
+
+	const maxFileSize = 100 * 1024 * 1024 // 100MB
+	if err := checkFileSize(file, maxFileSize); err != nil {
+		return nil, err
+	}
+
+	respBody, err := c.doMultipartRequest("/file/upload", "file", filename, file)
+	if err != nil {
+		return nil, err
+	}
+
+	var response UploadFileResponse
+	if err := unmarshalResponse(respBody, &response); err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
+// DeleteFile deletes an uploaded file using its delete key.
+func (c *Client) DeleteFile(deleteKey string) (*DeleteFileResponse, error) {
+	respBody, err := c.doRequest("GET", "/file/delete/"+deleteKey, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var response DeleteFileResponse
+	if err := unmarshalResponse(respBody, &response); err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
+// GetFileDomains retrieves the list of available domains for file sharing.
+func (c *Client) GetFileDomains() (*DomainsResponse, error) {
+	respBody, err := c.doRequest("GET", "/file/domains", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var response DomainsResponse
+	if err := unmarshalResponse(respBody, &response); err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
+// checkFileSize checks if the file size exceeds the maximum allowed size.
+func checkFileSize(file io.Reader, maxSize int64) error {
+	if f, ok := file.(interface{ Stat() (os.FileInfo, error) }); ok {
+		if info, err := f.Stat(); err == nil && info.Size() > maxSize {
+			return fmt.Errorf("file size exceeds the limit of %d bytes", maxSize)
+		}
+	} else if l, ok := file.(interface{ Len() int }); ok {
+		if int64(l.Len()) > maxSize {
+			return fmt.Errorf("file size exceeds the limit of %d bytes", maxSize)
+		}
+	}
+	return nil
 }
