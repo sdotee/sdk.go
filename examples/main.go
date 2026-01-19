@@ -17,6 +17,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	seesdk "github.com/sdotee/sdk.go"
@@ -118,4 +119,55 @@ func main() {
 		log.Fatalf("Failed to delete URL: %v", err)
 	}
 	fmt.Printf("Delete successful: %s\n", deleteResp.Message)
+
+	// Example 8: File Operations
+	fmt.Println("\n=== File Operations ===")
+
+	// Get file domains
+	fileDomains, err := client.GetFileDomains()
+	if err != nil {
+		log.Printf("Failed to get file domains: %v", err)
+	} else {
+		fmt.Printf("File domains: %v\n", fileDomains.Data.Domains)
+	}
+
+	// Create a dummy file for upload
+	tmpFile, err := os.CreateTemp("", "example-upload-*.txt")
+	if err != nil {
+		log.Fatalf("Failed to create temp file: %v", err)
+	}
+	defer os.Remove(tmpFile.Name())
+
+	content := []byte(fmt.Sprintf("Hello S.EE SDK File Upload Test %d", time.Now().UnixNano()))
+	if _, err := tmpFile.Write(content); err != nil {
+		log.Fatalf("Failed to write to temp file: %v", err)
+	}
+	tmpFile.Close() // Close to reopen for reading
+
+	// Open file for reading
+	fileToUpload, err := os.Open(tmpFile.Name())
+	if err != nil {
+		log.Fatalf("Failed to open file: %v", err)
+	}
+	defer fileToUpload.Close()
+
+	// Upload file
+	fmt.Println("Uploading file...")
+	uploadResp, err := client.UploadFile("test-file.txt", fileToUpload)
+	if err != nil {
+		log.Printf("Failed to upload file: %v", err)
+	} else {
+		fmt.Printf("File uploaded successfully!\n")
+		fmt.Printf("File URL: %s\n", uploadResp.Data.URL)
+		fmt.Printf("Delete Key: %s\n", uploadResp.Data.Delete)
+
+		// Delete file
+		fmt.Println("Deleting file...")
+		deleteFileResp, err := client.DeleteFile(uploadResp.Data.Delete)
+		if err != nil {
+			log.Printf("Failed to delete file: %v", err)
+		} else {
+			fmt.Printf("Delete success: %v\n", deleteFileResp.Success)
+		}
+	}
 }
