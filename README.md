@@ -6,7 +6,8 @@ Official Golang SDK for [S.EE](https://s.ee) URL shortener service. Create, mana
 
 - 🔗 Create short URLs with custom slugs
 - 📝 Create text/paste with syntax highlighting
-- �🔒 Password-protected links
+- 📂 File upload and sharing
+- 🔒 Password-protected links
 - ⏰ Expiration time support
 - 🏷️ Tag management for organization
 - 🌐 Multiple domain support
@@ -129,6 +130,31 @@ client.DeleteText(seesdk.DeleteTextRequest{
     Slug:   "hello-go",
 })
 ```
+
+### File Management
+
+```go
+// Get available domains for file sharing
+fileDomains, _ := client.GetFileDomains()
+fmt.Println(fileDomains.Data.Domains)
+
+// Upload a file
+file, _ := os.Open("image.png")
+defer file.Close()
+
+uploadResp, err := client.UploadFile("image.png", file)
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Printf("File URL: %s\n", uploadResp.Data.URL)
+fmt.Printf("Delete Key: %s\n", uploadResp.Data.Delete)
+
+// Delete file
+// Use the delete key returned from upload response
+deleteResp, err := client.DeleteFile(uploadResp.Data.Delete)
+if err != nil {
+    log.Fatal(err)
+}
 ```
 
 ## API Reference
@@ -155,7 +181,13 @@ client.DeleteText(seesdk.DeleteTextRequest{
 
 **DeleteText(req DeleteTextRequest)** - Remove a text entry
 
+**UploadFile(filename string, file io.Reader)** - Upload a file (max 100MB)
+
+**DeleteFile(deleteKey string)** - Delete a file using the delete key
+
 **GetDomains()** - List available domains
+
+**GetFileDomains()** - List available domains for file sharing
 
 **GetTags()** - List available tags
 
