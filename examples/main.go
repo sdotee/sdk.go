@@ -238,7 +238,7 @@ func fileOperations() {
 
 	// Delete file
 	fmt.Println("Deleting file...")
-	deleteFileResp, err := client.DeleteFile(uploadResp.Data.Delete)
+	deleteFileResp, err := client.DeleteFile(uploadResp.Data.Hash)
 	if err != nil {
 		log.Printf("Failed to delete file: %v\n", err)
 		return
