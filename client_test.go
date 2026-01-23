@@ -21,13 +21,12 @@ import (
 	"time"
 )
 
-func TestNewClient(t *testing.T) {
-	baseURL := DefaultBaseURL
-
+func setupTestClient(t *testing.T) *Client {
 	if os.Getenv("SEE_API_KEY") == "" {
 		t.Skip("SEE_API_KEY not set, skipping integration test")
 	}
 
+	baseURL := DefaultBaseURL
 	if os.Getenv("SEE_BASE_URL") != "" {
 		baseURL = os.Getenv("SEE_BASE_URL")
 	}
@@ -40,6 +39,12 @@ func TestNewClient(t *testing.T) {
 	if client == nil {
 		t.Fatal("Expected client to be created")
 	}
+
+	return client
+}
+
+func TestNewClient(t *testing.T) {
+	client := setupTestClient(t)
 
 	domains, err := client.GetDomains()
 	if err != nil {
@@ -102,24 +107,7 @@ func TestNewClient(t *testing.T) {
 }
 
 func TestTextOperations(t *testing.T) {
-	baseURL := DefaultBaseURL
-
-	if os.Getenv("SEE_API_KEY") == "" {
-		t.Skip("SEE_API_KEY not set, skipping integration test")
-	}
-
-	if os.Getenv("SEE_BASE_URL") != "" {
-		baseURL = os.Getenv("SEE_BASE_URL")
-	}
-
-	client := NewClient(Config{
-		BaseURL: baseURL,
-		APIKey:  os.Getenv("SEE_API_KEY"),
-	})
-
-	if client == nil {
-		t.Fatal("Expected client to be created")
-	}
+	client := setupTestClient(t)
 
 	// 1. Create Text
 	createResp, err := client.CreateText(CreateTextRequest{
@@ -172,19 +160,7 @@ func TestTextOperations(t *testing.T) {
 }
 
 func TestUploadFile(t *testing.T) {
-	if os.Getenv("SEE_API_KEY") == "" {
-		t.Skip("SEE_API_KEY not set, skipping integration test")
-	}
-
-	baseURL := DefaultBaseURL
-	if os.Getenv("SEE_BASE_URL") != "" {
-		baseURL = os.Getenv("SEE_BASE_URL")
-	}
-
-	client := NewClient(Config{
-		BaseURL: baseURL,
-		APIKey:  os.Getenv("SEE_API_KEY"),
-	})
+	client := setupTestClient(t)
 
 	// Create a temporary file
 	tmpfile, err := os.CreateTemp("", "example.*.txt")
@@ -239,19 +215,7 @@ func TestUploadFile(t *testing.T) {
 }
 
 func TestGetFileDomains(t *testing.T) {
-	if os.Getenv("SEE_API_KEY") == "" {
-		t.Skip("SEE_API_KEY not set, skipping integration test")
-	}
-
-	baseURL := DefaultBaseURL
-	if os.Getenv("SEE_BASE_URL") != "" {
-		baseURL = os.Getenv("SEE_BASE_URL")
-	}
-
-	client := NewClient(Config{
-		BaseURL: baseURL,
-		APIKey:  os.Getenv("SEE_API_KEY"),
-	})
+	client := setupTestClient(t)
 
 	domains, err := client.GetFileDomains()
 	if err != nil {
@@ -267,6 +231,28 @@ func TestGetFileDomains(t *testing.T) {
 	}
 
 	fmt.Println("Available file domains:")
+	for _, domain := range domains.Data.Domains {
+		fmt.Printf(" - %s\n", domain)
+	}
+}
+
+func TestGetTextDomains(t *testing.T) {
+	client := setupTestClient(t)
+
+	domains, err := client.GetTextDomains()
+	if err != nil {
+		t.Fatal("Expected no error, got:", err)
+	}
+
+	if domains.Code != 200 {
+		t.Errorf("Expected response code 200, got: %d", domains.Code)
+	}
+
+	if len(domains.Data.Domains) == 0 {
+		t.Fatal("Expected at least one text domain, got zero")
+	}
+
+	fmt.Println("Available text domains:")
 	for _, domain := range domains.Data.Domains {
 		fmt.Printf(" - %s\n", domain)
 	}
