@@ -203,6 +203,21 @@ func (c *Client) GetFileDomains() (*DomainsResponse, error) {
 	return &response, nil
 }
 
+// GetTextDomains retrieves the list of available domains for text sharing.
+func (c *Client) GetTextDomains() (*DomainsResponse, error) {
+	respBody, err := c.doRequest("GET", "/text/domains", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var response DomainsResponse
+	if err := unmarshalResponse(respBody, &response); err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
 // checkFileSize checks if the file size exceeds the maximum allowed size.
 func checkFileSize(file io.Reader, maxSize int64) error {
 	if f, ok := file.(interface{ Stat() (os.FileInfo, error) }); ok {
