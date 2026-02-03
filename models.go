@@ -58,6 +58,26 @@ type CreateTextResponse struct {
 	Message string `json:"message"`
 }
 
+// GetUsageResponse represents the response containing usage statistics.
+type GetUsageResponse struct {
+	Code int `json:"code"`
+	Data struct {
+		APICountDay           int `json:"api_count_day"`
+		APICountDayLimit      int `json:"api_count_day_limit"`
+		APICountMonth         int `json:"api_count_month"`
+		APICountMonthLimit    int `json:"api_count_month_limit"`
+		LinkCountDay          int `json:"link_count_day"`
+		LinkCountDayLimit     int `json:"link_count_day_limit"`
+		LinkCountMonth        int `json:"link_count_month"`
+		LinkCountMonthLimit   int `json:"link_count_month_limit"`
+		QRCodeCountDay        int `json:"qrcode_count_day"`
+		QRCodeCountDayLimit   int `json:"qrcode_count_day_limit"`
+		QRCodeCountMonth      int `json:"qrcode_count_month"`
+		QRCodeCountMonthLimit int `json:"qrcode_count_month_limit"`
+	} `json:"data"`
+	Message string `json:"message"`
+}
+
 // DeleteURLRequest represents a request to delete a short URL.
 type DeleteURLRequest struct {
 	Domain string `json:"domain"`
@@ -79,13 +99,8 @@ type DeleteURLResponse struct {
 
 // DeleteTextResponse represents the response from deleting a text.
 type DeleteTextResponse struct {
-	Code int `json:"code"`
-	Data struct {
-		Tags []struct {
-			Id   int    `json:"id"`
-			Name string `json:"name"`
-		}
-	} `json:"data"`
+	Code    int    `json:"code"`
+	Data    any    `json:"data,omitempty"`
 	Message string `json:"message"`
 }
 
@@ -140,13 +155,8 @@ type UpdateShortURLResponse struct {
 
 // UpdateTextResponse represents the response from updating a text.
 type UpdateTextResponse struct {
-	Code int `json:"code"`
-	Data struct {
-		Tags []struct {
-			Id   int    `json:"id"`
-			Name string `json:"name"`
-		}
-	} `json:"data"`
+	Code    int    `json:"code"`
+	Data    any    `json:"data,omitempty"`
 	Message string `json:"message"`
 }
 

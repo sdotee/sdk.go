@@ -74,6 +74,24 @@ func (c *Client) DeleteShortURL(request DeleteURLRequest) (*DeleteURLResponse, e
 	return &response, nil
 }
 
+// UsageNoLimit represents unlimited usage.
+const UsageNoLimit = -1
+
+// GetUsage retrieves the usage statistics of the account.
+func (c *Client) GetUsage() (*GetUsageResponse, error) {
+	respBody, err := c.doRequest("GET", "/usage", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var response GetUsageResponse
+	if err := unmarshalResponse(respBody, &response); err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
 // GetDomains retrieves the list of available domains.
 func (c *Client) GetDomains() (*DomainsResponse, error) {
 	respBody, err := c.doRequest("GET", "/domains", nil)
