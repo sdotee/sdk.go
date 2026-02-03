@@ -12,6 +12,7 @@ Official Golang SDK for [S.EE](https://s.ee) URL shortener service. Create, mana
 - 🏷️ Tag management for organization
 - 🌐 Multiple domain support
 - 📊 Track and analyze link performance
+- 📈 View account usage statistics
 
 ## Installation
 
@@ -80,6 +81,16 @@ resp, err := client.CreateShortURL(seesdk.CreateShortURLRequest{
         TagIDs:     []int64{1, 2},
     },
 })
+```
+
+### Statistics
+
+```go
+// Get account usage statistics
+usage, _ := client.GetUsage()
+fmt.Printf("Links created today: %d/%d\n",
+    usage.Data.LinkCountDay,
+    usage.Data.LinkCountDayLimit)
 ```
 
 ### Update and Delete
@@ -184,6 +195,10 @@ if err != nil {
 **UploadFile(filename string, file io.Reader)** - Upload a file (max 100MB)
 
 **DeleteFile(deleteKey string)** - Delete a file using the delete key
+
+**GetUsage()** - Get account usage statistics
+
+**GetLinkVisitStats(domain, slug, period string)** - Get access statistics for a short link
 
 **GetDomains()** - List available domains
 

@@ -257,3 +257,24 @@ func TestGetTextDomains(t *testing.T) {
 		fmt.Printf(" - %s\n", domain)
 	}
 }
+
+func TestGetUsage(t *testing.T) {
+	client := setupTestClient(t)
+
+	usage, err := client.GetUsage()
+	if err != nil {
+		t.Fatal("Expected no error, got:", err)
+	}
+
+	if usage.Code != 200 {
+		t.Errorf("Expected response code 200, got: %d", usage.Code)
+	}
+
+	fmt.Printf("Links created this month: %d/%d\n",
+		usage.Data.LinkCountMonth,
+		usage.Data.LinkCountMonthLimit)
+
+	if usage.Data.APICountMonthLimit != UsageNoLimit {
+		t.Error("Expected API count month limit to be no limit")
+	}
+}
