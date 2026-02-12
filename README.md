@@ -6,12 +6,12 @@ Official Golang SDK for [S.EE](https://s.ee) URL shortener service. Create, mana
 
 - 🔗 Create short URLs with custom slugs
 - 📝 Create text/paste with syntax highlighting
-- 📂 File upload and sharing
+- 📂 File upload and sharing (public or private)
+- 📜 File upload history with pagination
 - 🔒 Password-protected links
 - ⏰ Expiration time support
 - 🏷️ Tag management for organization
 - 🌐 Multiple domain support
-- 📊 Track and analyze link performance
 - 📈 View account usage statistics
 
 ## Installation
@@ -39,9 +39,7 @@ Create your first short URL:
 resp, err := client.CreateShortURL(seesdk.CreateShortURLRequest{
     TargetURL: "https://www.example.com/very/long/url",
     Domain:    "s.ee",
-    BaseCreateRequest: seesdk.BaseCreateRequest{
-        Title: "My Link",
-    },
+    Title:     "My Link",
 })
 
 fmt.Printf("Short URL: %s\n", resp.Data.ShortURL)
@@ -59,7 +57,7 @@ fmt.Println(domains.Data.Domains)
 // Get available tags
 tags, _ := client.GetTags()
 for _, tag := range tags.Data.Tags {
-    fmt.Printf("%s (ID: %d)\n", tag.Name, tag.Id)
+    fmt.Printf("%s (ID: %d)\n", tag.Name, tag.ID)
 }
 ```
 
@@ -73,13 +71,11 @@ expireAt := time.Now().Add(30 * 24 * time.Hour).Unix()
 resp, err := client.CreateShortURL(seesdk.CreateShortURLRequest{
     TargetURL:  "https://www.example.com/campaign",
     Domain:     "s.ee",
-    BaseCreateRequest: seesdk.BaseCreateRequest{
-        CustomSlug: "summer-sale",
-        ExpireAt:   expireAt,
-        Password:   "secret123",
-        Title:      "Summer Sale Campaign",
-        TagIDs:     []int64{1, 2},
-    },
+    CustomSlug: "summer-sale",
+    ExpireAt:   expireAt,
+    Password:   "secret123",
+    Title:      "Summer Sale Campaign",
+    TagIDs:     []int64{1, 2},
 })
 ```
 
@@ -98,21 +94,18 @@ fmt.Printf("Links created today: %d/%d\n",
 ```go
 // Update existing short URL
 client.UpdateShortURL(seesdk.UpdateShortURLRequest{
-    BaseSlugRequest: seesdk.BaseSlugRequest{
-        Domain: "s.ee",
-        Slug:   "summer-sale",
-    },
+    Domain:    "s.ee",
+    Slug:      "summer-sale",
     TargetURL: "https://www.example.com/new-campaign",
     Title:     "Updated Campaign",
 })
 
 // Delete short URL
 client.DeleteShortURL(seesdk.DeleteURLRequest{
-    BaseSlugRequest: seesdk.BaseSlugRequest{
-        Domain: "s.ee",
-        Slug:   "summer-sale",
-    },
+    Domain: "s.ee",
+    Slug:   "summer-sale",
 })
+```
 
 ### Text Management
 
@@ -122,7 +115,7 @@ textResp, err := client.CreateText(seesdk.CreateTextRequest{
     Content:    "fmt.Println(\"Hello World\")",
     Domain:     "s.ee",
     Title:      "Go Hello World",
-    TextType:   "go", // Syntax highlighting
+    TextType:   "source_code",
     CustomSlug: "hello-go",
 })
 fmt.Printf("Text URL: %s\n", textResp.Data.ShortURL)
@@ -145,27 +138,38 @@ client.DeleteText(seesdk.DeleteTextRequest{
 ### File Management
 
 ```go
-// Get available domains for file sharing
-fileDomains, _ := client.GetFileDomains()
-fmt.Println(fileDomains.Data.Domains)
-
 // Upload a file
 file, _ := os.Open("image.png")
 defer file.Close()
 
-uploadResp, err := client.UploadFile("image.png", file)
-if err != nil {
-    log.Fatal(err)
-}
+uploadResp, err := client.UploadFile(seesdk.UploadFileRequest{
+    Filename: "image.png",
+    File:     file,
+})
 fmt.Printf("File URL: %s\n", uploadResp.Data.URL)
-fmt.Printf("Delete Key: %s\n", uploadResp.Data.Delete)
+fmt.Printf("Delete Key: %s\n", uploadResp.Data.Hash)
 
-// Delete file
-// Use the delete key returned from upload response
-deleteResp, err := client.DeleteFile(uploadResp.Data.Delete)
-if err != nil {
-    log.Fatal(err)
+// Upload a private file with custom domain and slug
+privateResp, err := client.UploadFile(seesdk.UploadFileRequest{
+    Filename:   "secret.pdf",
+    File:       file,
+    IsPrivate:  true,
+    Domain:     "s.ee",
+    CustomSlug: "my-file",
+})
+
+// Get file upload history (paginated, 30 per page)
+history, _ := client.GetFileHistory(1)
+for _, f := range history.Data {
+    fmt.Printf("%s - %s\n", f.Filename, f.URL)
 }
+
+// Get available domains for file sharing
+fileDomains, _ := client.GetFileDomains()
+fmt.Println(fileDomains.Data.Domains)
+
+// Delete file using hash
+client.DeleteFile(uploadResp.Data.Hash)
 ```
 
 ## API Reference
@@ -192,17 +196,19 @@ if err != nil {
 
 **DeleteText(req DeleteTextRequest)** - Remove a text entry
 
-**UploadFile(filename string, file io.Reader)** - Upload a file (max 100MB)
+**UploadFile(req UploadFileRequest)** - Upload a file (max 100MB)
+
+**GetFileHistory(page int)** - Get paginated file upload history (30 per page)
 
 **DeleteFile(deleteKey string)** - Delete a file using the delete key
 
 **GetUsage()** - Get account usage statistics
 
-**GetLinkVisitStats(domain, slug, period string)** - Get access statistics for a short link
-
 **GetDomains()** - List available domains
 
 **GetFileDomains()** - List available domains for file sharing
+
+**GetTextDomains()** - List available domains for text sharing
 
 **GetTags()** - List available tags
 
@@ -227,7 +233,7 @@ if err != nil {
 | --------- | ------ | -------- |
 | Domain    | string | Yes      |
 | Slug      | string | Yes      |
-| TargetUrl | string | Yes      |
+| TargetURL | string | Yes      |
 | Title     | string | No       |
 
 **DeleteURLRequest**
@@ -244,7 +250,7 @@ if err != nil {
 | Content    | string  | Yes      | Text content             |
 | Domain     | string  | No       | Short domain name        |
 | CustomSlug | string  | No       | Custom URL slug          |
-| TextType   | string  | No       | Syntax highlighting type |
+| TextType   | string  | No       | plain_text, source_code, or markdown |
 | Title      | string  | No       | Text title               |
 | Password   | string  | No       | Access password          |
 | ExpireAt   | int64   | No       | Unix timestamp (seconds) |
@@ -265,6 +271,16 @@ if err != nil {
 | ------ | ------ | -------- |
 | Domain | string | Yes      |
 | Slug   | string | Yes      |
+
+**UploadFileRequest**
+
+| Field      | Type      | Required | Description                          |
+| ---------- | --------- | -------- | ------------------------------------ |
+| Filename   | string    | Yes      | Name of the file                     |
+| File       | io.Reader | Yes      | File content reader                  |
+| Domain     | string    | No       | Domain for the short link            |
+| CustomSlug | string    | No       | Custom slug for the file URL         |
+| IsPrivate  | bool      | No       | Set to true for private file upload  |
 
 ## Error Handling
 
