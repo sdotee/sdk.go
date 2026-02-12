@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"os"
 	"testing"
-	"time"
 )
 
 func setupTestClient(t *testing.T) *Client {
@@ -65,7 +64,7 @@ func TestNewClient(t *testing.T) {
 	}
 
 	response, err := client.CreateShortURL(CreateShortURLRequest{
-		Domain:    "a.see-test.com",
+		Domain:    "url.see-test.com",
 		TargetURL: "https://www.google.com/",
 	})
 
@@ -78,7 +77,7 @@ func TestNewClient(t *testing.T) {
 	}
 
 	result, err := client.UpdateShortURL(UpdateShortURLRequest{
-		Domain:    "a.see-test.com",
+		Domain:    "url.see-test.com",
 		Slug:      response.Data.Slug,
 		Title:     "Google",
 		TargetURL: "https://www.google.com/search?q=see+sdk",
@@ -93,7 +92,7 @@ func TestNewClient(t *testing.T) {
 	}
 
 	result2, err := client.DeleteShortURL(DeleteURLRequest{
-		Domain: "a.see-test.com",
+		Domain: "url.see-test.com",
 		Slug:   response.Data.Slug,
 	})
 
@@ -111,7 +110,7 @@ func TestTextOperations(t *testing.T) {
 
 	// 1. Create Text
 	createResp, err := client.CreateText(CreateTextRequest{
-		Domain:  "ba.sh",
+		Domain:  "text.see-test.com",
 		Content: "Hello, World! This is a test text.",
 		Title:   "Test Text",
 	})
@@ -130,7 +129,7 @@ func TestTextOperations(t *testing.T) {
 
 	// 2. Update Text
 	updateResp, err := client.UpdateText(UpdateTextRequest{
-		Domain:  "ba.sh",
+		Domain:  "text.see-test.com",
 		Slug:    createResp.Data.Slug,
 		Content: "Hello, World! This is an updated test text.",
 		Title:   "Updated Test Text",
@@ -146,7 +145,7 @@ func TestTextOperations(t *testing.T) {
 
 	// 3. Delete Text
 	deleteResp, err := client.DeleteText(DeleteTextRequest{
-		Domain: "ba.sh",
+		Domain: "text.see-test.com",
 		Slug:   createResp.Data.Slug,
 	})
 
@@ -162,31 +161,16 @@ func TestTextOperations(t *testing.T) {
 func TestUploadFile(t *testing.T) {
 	client := setupTestClient(t)
 
-	// Create a temporary file
-	tmpfile, err := os.CreateTemp("", "example.*.txt")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.Remove(tmpfile.Name()) // clean up
-
-	// Use unique content to avoid duplicates on server side
-	content := []byte(fmt.Sprintf("Hello, S.EE! %d", time.Now().UnixNano()))
-	if _, err := tmpfile.Write(content); err != nil {
-		t.Fatal(err)
-	}
-	if err := tmpfile.Close(); err != nil {
-		t.Fatal(err)
-	}
-
-	// Open the file for reading
-	file, err := os.Open(tmpfile.Name())
+	file, err := os.Open("testdata/test.png")
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer file.Close()
 
-	// Upload the file
-	resp, err := client.UploadFile("test.txt", file)
+	resp, err := client.UploadFile(UploadFileRequest{
+		Filename: "test.png",
+		File:     file,
+	})
 	if err != nil {
 		t.Fatal("Expected no error on upload file, got:", err)
 	}
@@ -203,6 +187,10 @@ func TestUploadFile(t *testing.T) {
 		t.Error("Expected Delete key in response")
 	}
 
+	if resp.Data.Width == 0 || resp.Data.Height == 0 {
+		t.Errorf("Expected image dimensions, got: %dx%d", resp.Data.Width, resp.Data.Height)
+	}
+
 	// Delete the file
 	deleteResp, err := client.DeleteFile(resp.Data.Hash)
 	if err != nil {
@@ -212,6 +200,63 @@ func TestUploadFile(t *testing.T) {
 	if !deleteResp.Success {
 		t.Errorf("Expected success true, got false")
 	}
+}
+
+func TestUploadFilePrivate(t *testing.T) {
+	client := setupTestClient(t)
+
+	file, err := os.Open("testdata/test.png")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer file.Close()
+
+	// Upload as private
+	resp, err := client.UploadFile(UploadFileRequest{
+		Filename:  "test-private.png",
+		File:      file,
+		IsPrivate: true,
+	})
+	if err != nil {
+		t.Fatal("Expected no error on upload private file, got:", err)
+	}
+
+	if resp.Code != 200 {
+		t.Errorf("Expected response code 200, got: %d", resp.Code)
+	}
+
+	if resp.Data.URL == "" {
+		t.Error("Expected URL in response")
+	}
+
+	// Clean up
+	deleteResp, err := client.DeleteFile(resp.Data.Hash)
+	if err != nil {
+		t.Fatal("Expected no error on delete file, got:", err)
+	}
+
+	if !deleteResp.Success {
+		t.Errorf("Expected success true, got false")
+	}
+}
+
+func TestGetFileHistory(t *testing.T) {
+	client := setupTestClient(t)
+
+	resp, err := client.GetFileHistory(1)
+	if err != nil {
+		t.Fatal("Expected no error, got:", err)
+	}
+
+	if resp.Code != 200 {
+		t.Errorf("Expected response code 200, got: %d", resp.Code)
+	}
+
+	if !resp.Success {
+		t.Error("Expected success true")
+	}
+
+	fmt.Printf("File history: %d files on page 1\n", len(resp.Data))
 }
 
 func TestGetFileDomains(t *testing.T) {

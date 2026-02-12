@@ -168,22 +168,55 @@ func (c *Client) DeleteText(req DeleteTextRequest) (*DeleteTextResponse, error) 
 }
 
 // UploadFile uploads a file to the server.
-func (c *Client) UploadFile(filename string, file io.Reader) (*UploadFileResponse, error) {
-	if file == nil {
+func (c *Client) UploadFile(req UploadFileRequest) (*UploadFileResponse, error) {
+	if req.File == nil {
 		return nil, fmt.Errorf("file is nil")
 	}
 
 	const maxFileSize = 100 * 1024 * 1024 // 100MB
-	if err := checkFileSize(file, maxFileSize); err != nil {
+	if err := checkFileSize(req.File, maxFileSize); err != nil {
 		return nil, err
 	}
 
-	respBody, err := c.doMultipartRequest("/file/upload", "file", filename, file)
+	fields := make(map[string]string)
+	if req.Domain != "" {
+		fields["domain"] = req.Domain
+	}
+	if req.CustomSlug != "" {
+		fields["custom_slug"] = req.CustomSlug
+	}
+	if req.IsPrivate {
+		fields["is_private"] = "1"
+	}
+
+	respBody, err := c.doMultipartRequest("/file/upload", "file", req.Filename, req.File, fields)
 	if err != nil {
 		return nil, err
 	}
 
 	var response UploadFileResponse
+	if err := unmarshalResponse(respBody, &response); err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
+// GetFileHistory retrieves a paginated list of uploaded files.
+// Returns 30 files per page, sorted by creation time descending.
+// Page starts at 1. If page is 0 or negative, defaults to page 1.
+func (c *Client) GetFileHistory(page int) (*GetFileHistoryResponse, error) {
+	endpoint := "/files"
+	if page > 1 {
+		endpoint = fmt.Sprintf("/files?page=%d", page)
+	}
+
+	respBody, err := c.doRequest("GET", endpoint, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var response GetFileHistoryResponse
 	if err := unmarshalResponse(respBody, &response); err != nil {
 		return nil, err
 	}

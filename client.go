@@ -100,7 +100,7 @@ func (c *Client) doRequest(method, endpoint string, body any) ([]byte, error) {
 }
 
 // doMultipartRequest executes a multipart HTTP request.
-func (c *Client) doMultipartRequest(endpoint string, fieldName, filename string, r io.Reader) ([]byte, error) {
+func (c *Client) doMultipartRequest(endpoint string, fieldName, filename string, r io.Reader, fields map[string]string) ([]byte, error) {
 	pr, pw := io.Pipe()
 	writer := multipart.NewWriter(pw)
 
@@ -114,6 +114,12 @@ func (c *Client) doMultipartRequest(endpoint string, fieldName, filename string,
 		if _, err := io.Copy(part, r); err != nil {
 			_ = pw.CloseWithError(fmt.Errorf("copy file content: %w", err))
 			return
+		}
+		for key, value := range fields {
+			if err := writer.WriteField(key, value); err != nil {
+				_ = pw.CloseWithError(fmt.Errorf("write field %s: %w", key, err))
+				return
+			}
 		}
 		if err := writer.Close(); err != nil {
 			_ = pw.CloseWithError(fmt.Errorf("close writer: %w", err))

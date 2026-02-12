@@ -14,6 +14,8 @@
 
 package seesdk
 
+import "io"
+
 // CreateShortURLRequest represents a request to create a short URL.
 type CreateShortURLRequest struct {
 	CustomSlug            string  `json:"custom_slug,omitempty"`
@@ -112,24 +114,45 @@ type UpdateShortURLRequest struct {
 	Title     string `json:"title"`
 }
 
+// UploadFileRequest represents a request to upload a file.
+type UploadFileRequest struct {
+	Filename   string
+	File       io.Reader
+	Domain     string
+	CustomSlug string
+	IsPrivate  bool
+}
+
+// UploadFileData represents the metadata of an uploaded file.
+type UploadFileData struct {
+	CreatedAt    int    `json:"created_at,omitempty"`
+	Delete       string `json:"delete"`
+	FileID       int    `json:"file_id"`
+	Filename     string `json:"filename"`
+	Hash         string `json:"hash"`
+	Height       int    `json:"height"`
+	Page         string `json:"page"`
+	Path         string `json:"path"`
+	Size         int    `json:"size"`
+	Storename    string `json:"storename"`
+	UploadStatus int    `json:"upload_status"`
+	URL          string `json:"url"`
+	Width        int    `json:"width"`
+}
+
 // UploadFileResponse represents the response from uploading a file.
 type UploadFileResponse struct {
-	Code int `json:"code"`
-	Data struct {
-		Delete       string `json:"delete"`
-		FileID       int    `json:"file_id"`
-		Filename     string `json:"filename"`
-		Hash         string `json:"hash"`
-		Height       int    `json:"height"`
-		Page         string `json:"page"`
-		Path         string `json:"path"`
-		Size         int    `json:"size"`
-		Storename    string `json:"storename"`
-		UploadStatus int    `json:"upload_status"`
-		URL          string `json:"url"`
-		Width        int    `json:"width"`
-	} `json:"data"`
-	Message string `json:"message"`
+	Code    int            `json:"code"`
+	Data    UploadFileData `json:"data"`
+	Message string         `json:"message"`
+}
+
+// GetFileHistoryResponse represents the response containing file upload history.
+type GetFileHistoryResponse struct {
+	Code    int              `json:"code"`
+	Data    []UploadFileData `json:"data"`
+	Message string           `json:"message"`
+	Success bool             `json:"success"`
 }
 
 // DeleteFileResponse represents the response from deleting a file.

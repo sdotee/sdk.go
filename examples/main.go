@@ -226,7 +226,10 @@ func fileOperations() {
 
 	// Upload file
 	fmt.Println("Uploading file...")
-	uploadResp, err := client.UploadFile("test-file.txt", fileToUpload)
+	uploadResp, err := client.UploadFile(seesdk.UploadFileRequest{
+		Filename: "test-file.txt",
+		File:     fileToUpload,
+	})
 	if err != nil {
 		log.Printf("Failed to upload file: %v\n", err)
 		return
