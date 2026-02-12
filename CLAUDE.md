@@ -29,9 +29,9 @@ Tests use `setupTestClient(t)` as a shared helper that reads env vars and calls 
 Four source files, single package (`seesdk`), flat structure:
 
 - **`client.go`** — `Client` struct, `Config`, `NewClient()` constructor, and private HTTP helpers (`doRequest` for JSON, `doMultipartRequest` for file uploads). Auth is done by setting the `Authorization` header directly (not Bearer prefix).
-- **`api.go`** — All 13 public methods on `Client` (CRUD for short URLs, text, files; read-only for domains, tags, usage). Uses a generic `unmarshalResponse[T]` helper for JSON deserialization.
-- **`models.go`** — Request/response structs with JSON tags. Responses follow a common `{code, data, message}` envelope pattern with nested `Data` structs.
-- **`client_test.go`** — Integration tests covering the full API surface.
+- **`api.go`** — All 14 public methods on `Client` (CRUD for short URLs, text, files; read-only for domains, tags, usage, file history). Uses a generic `unmarshalResponse[T]` helper for JSON deserialization.
+- **`models.go`** — Request/response structs with JSON tags. Responses follow a common `{code, data, message}` envelope pattern. `UploadFileData` is a shared named struct used by both `UploadFileResponse` and `GetFileHistoryResponse`.
+- **`client_test.go`** — Integration tests covering the full API surface. Test fixtures live in `testdata/`.
 
 ## API Endpoints Mapped to Methods
 
@@ -44,6 +44,7 @@ Four source files, single package (`seesdk`), flat structure:
 | `UpdateText` | PUT | `/text` |
 | `DeleteText` | DELETE | `/text` |
 | `UploadFile` | POST (multipart) | `/file/upload` |
+| `GetFileHistory` | GET | `/files` |
 | `DeleteFile` | GET | `/file/delete/:key` |
 | `GetDomains` | GET | `/domains` |
 | `GetFileDomains` | GET | `/file/domains` |
@@ -54,7 +55,8 @@ Four source files, single package (`seesdk`), flat structure:
 ## Conventions
 
 - File headers include copyright, author, and timestamp comments
-- Request structs use `json:"field_name,omitempty"` tags; response structs use inline anonymous `Data` structs
+- JSON request structs use `json:"field_name,omitempty"` tags; multipart requests (e.g. `UploadFileRequest`) use plain Go fields without JSON tags
+- `doMultipartRequest` accepts a `fields map[string]string` for additional form fields (e.g. `is_private`, `domain`, `custom_slug`)
 - All public methods return `(*ResponseType, error)`
 - Errors are wrapped with `fmt.Errorf("context: %w", err)`
 - File uploads are capped at 100MB (`checkFileSize` validates via `Stat()` or `Len()` interface)
