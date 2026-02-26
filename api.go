@@ -269,6 +269,22 @@ func (c *Client) GetTextDomains() (*DomainsResponse, error) {
 	return &response, nil
 }
 
+// GetPrivateFileDownloadURL retrieves a temporary download URL for a private file using its file ID.
+func (c *Client) GetPrivateFileDownloadURL(fileID int64) (*GetPrivateFileDownloadURLResponse, error) {
+	endpoint := fmt.Sprintf("/file/private/download-url?file_id=%d", fileID)
+	respBody, err := c.doRequest("GET", endpoint, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var response GetPrivateFileDownloadURLResponse
+	if err := unmarshalResponse(respBody, &response); err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
 // checkFileSize checks if the file size exceeds the maximum allowed size.
 func checkFileSize(file io.Reader, maxSize int64) error {
 	if f, ok := file.(interface{ Stat() (os.FileInfo, error) }); ok {
