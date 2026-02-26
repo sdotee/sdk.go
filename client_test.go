@@ -323,3 +323,71 @@ func TestGetUsage(t *testing.T) {
 		t.Error("Expected API count month limit to be no limit")
 	}
 }
+
+func TestGetPrivateFileDownloadURL(t *testing.T) {
+	client := setupTestClient(t)
+
+	// Since we need an existing private file ID for this test, let's create one.
+	// We'll upload a temporary file.
+
+	// 1. Create a dummy file
+	f, err := os.CreateTemp("", "test-private-*.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(f.Name())
+	f.WriteString("This is a private file content test.")
+	f.Close()
+
+	file, err := os.Open(f.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer file.Close()
+
+	// 2. Upload it privately
+	uploadResp, err := client.UploadFile(UploadFileRequest{
+		Filename:  "test-private-dl.txt",
+		File:      file,
+		IsPrivate: true,
+	})
+	if err != nil {
+		t.Fatal("Failed to upload private file:", err)
+	}
+
+	if uploadResp.Code != 200 {
+		t.Logf("Upload failed with code %d: %s (maybe account limit reached or other issue)", uploadResp.Code, uploadResp.Message)
+		return
+	}
+
+	// Ensure cleanup of the uploaded file
+	defer func() {
+		client.DeleteFile(uploadResp.Data.Hash)
+	}()
+
+	t.Logf("Uploaded private file ID: %d", uploadResp.Data.FileID)
+
+	// 3. Test GetPrivateFileDownloadURL
+	dlResp, err := client.GetPrivateFileDownloadURL(int64(uploadResp.Data.FileID))
+	if err != nil {
+		t.Fatal("GetPrivateFileDownloadURL failed:", err)
+	}
+
+	if dlResp.Code != 200 {
+		t.Errorf("Expected response code 200, got: %d (message: %s)", dlResp.Code, dlResp.Message)
+	}
+
+	if dlResp.Data.URL == "" {
+		t.Error("Expected download URL in response, got empty string")
+	}
+
+	if dlResp.Data.FileID != int64(uploadResp.Data.FileID) {
+		t.Errorf("Expected file ID %d, got %d", uploadResp.Data.FileID, dlResp.Data.FileID)
+	}
+
+	if dlResp.Data.ExpiresAt == 0 {
+		t.Error("Expected expiration timestamp, got 0")
+	}
+
+	t.Logf("Got private download URL: %s", dlResp.Data.URL)
+}
