@@ -206,3 +206,18 @@ type TagsResponse struct {
 	} `json:"data"`
 	Message string `json:"message"`
 }
+
+// GetPrivateFileDownloadURLData contains the private file download URL information.
+type GetPrivateFileDownloadURLData struct {
+	FileID    int64  `json:"file_id"`
+	URL       string `json:"url"`
+	ExpiresAt int64  `json:"expires_at"`
+}
+
+// GetPrivateFileDownloadURLResponse represents the response when getting a private file download URL.
+type GetPrivateFileDownloadURLResponse struct {
+	Code    int                           `json:"code"`
+	Data    GetPrivateFileDownloadURLData `json:"data"`
+	Message string                        `json:"message"`
+	Success bool                          `json:"success"`
+}
