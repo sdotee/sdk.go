@@ -1,0 +1,1015 @@
+components:
+  schemas:
+    data:
+      properties:
+        data:
+          $ref: '#/components/schemas/val.GetTagsRespV'
+      type: object
+    httper.RespBody:
+      allOf:
+        - $ref: '#/components/schemas/data'
+      properties:
+        code:
+          description: Response status code (200 indicates success)
+          type: integer
+        data:
+          description: Response payload
+        message:
+          description: Human-readable status message
+          type: string
+      type: object
+    val.CreateShortURLReq:
+      properties:
+        custom_slug:
+          description: Your preferred custom slug (e.g., "my-link"). If not provided, a random slug will be generated.
+          maxLength: 255
+          type: string
+        domain:
+          default: s.ee
+          description: The domain to use for your short URL (e.g., "s.ee")
+          maxLength: 255
+          type: string
+        expiration_redirect_url:
+          description: URL to redirect visitors to after this short link expires
+          maxLength: 2000
+          type: string
+        expire_at:
+          description: Unix timestamp when this short link should expire (e.g., 1735689600)
+          type: integer
+        password:
+          description: Optional password to protect this short link (3-32 characters)
+          maxLength: 32
+          minLength: 3
+          type: string
+        tag_ids:
+          description: Array of tag IDs to organize this link (get available tags via /api/v1/tags)
+          items:
+            type: integer
+          type: array
+          uniqueItems: false
+        target_url:
+          description: The destination URL you want to shorten (required)
+          maxLength: 2000
+          type: string
+        title:
+          description: A descriptive title for this short link (for your reference)
+          maxLength: 255
+          type: string
+      required:
+        - domain
+        - target_url
+      type: object
+    val.CreateShortURLResp:
+      description: Short URL creation response
+      properties:
+        custom_slug:
+          description: The custom slug if one was requested
+          type: string
+        short_url:
+          description: The complete short URL ready to share (e.g., "https://s.ee/abc123")
+          type: string
+        slug:
+          description: The unique identifier portion of the short URL
+          type: string
+      type: object
+    val.CreateShortURLRespV:
+      properties:
+        code:
+          description: Response status code (200 indicates success)
+          type: integer
+        data:
+          $ref: '#/components/schemas/val.CreateShortURLResp'
+        message:
+          description: Human-readable status message
+          type: string
+      type: object
+    val.CreateTextReq:
+      properties:
+        content:
+          description: The text content you want to share (up to 2MB)
+          maxLength: 2097152
+          type: string
+        custom_slug:
+          description: Your preferred custom slug. If not provided, a random slug will be generated.
+          maxLength: 255
+          type: string
+        domain:
+          default: fs.to
+          description: The domain to use for your text share URL (e.g., "fs.to")
+          maxLength: 255
+          type: string
+        expire_at:
+          description: Unix timestamp when this text sharing should expire
+          type: integer
+        password:
+          description: Optional password to protect this text sharing (3-32 characters)
+          maxLength: 32
+          minLength: 3
+          type: string
+        tag_ids:
+          description: Array of tag IDs to organize this text (max 5 tags)
+          items:
+            type: integer
+          maxItems: 5
+          minItems: 0
+          type: array
+          uniqueItems: false
+        text_type:
+          description: 'Content format: "plain_text" for regular text, "source_code" for code with syntax highlighting, or "markdown" for formatted text'
+          enum:
+            - plain_text
+            - source_code
+            - markdown
+          type: string
+        title:
+          description: A descriptive title for this text sharing (required)
+          maxLength: 255
+          type: string
+      required:
+        - content
+        - title
+      type: object
+    val.CreateTextResp:
+      description: Text sharing creation response
+      properties:
+        custom_slug:
+          description: The custom slug if one was requested
+          type: string
+        short_url:
+          description: The complete URL to access your text sharing
+          type: string
+        slug:
+          description: The unique identifier portion of the URL
+          type: string
+      type: object
+    val.CreateTextRespV:
+      properties:
+        code:
+          description: Response status code (200 indicates success)
+          type: integer
+        data:
+          $ref: '#/components/schemas/val.CreateTextResp'
+        message:
+          description: Human-readable status message
+          type: string
+      type: object
+    val.DeleteFileResp:
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        success:
+          type: boolean
+      type: object
+    val.DeleteShortURLReq:
+      properties:
+        domain:
+          description: The domain where the short URL is hosted (e.g., "s.ee")
+          maxLength: 255
+          type: string
+        slug:
+          description: The slug of the short URL to delete (e.g., "abc123")
+          maxLength: 255
+          type: string
+      required:
+        - domain
+        - slug
+      type: object
+    val.DeleteTextReq:
+      properties:
+        domain:
+          description: The domain where the text sharing is hosted (e.g., "fs.to")
+          maxLength: 255
+          type: string
+        slug:
+          description: The slug of the text sharing to delete
+          maxLength: 255
+          type: string
+      required:
+        - domain
+        - slug
+      type: object
+    val.GetAvailableDomainsResp:
+      description: Available domains response
+      properties:
+        domains:
+          description: List of domains you can use for creating short URLs
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+      type: object
+    val.GetAvailableDomainsRespV:
+      properties:
+        code:
+          description: Response status code (200 indicates success)
+          type: integer
+        data:
+          $ref: '#/components/schemas/val.GetAvailableDomainsResp'
+        message:
+          description: Human-readable status message
+          type: string
+      type: object
+    val.GetLinkVisitStatResp:
+      description: Link visit statistics response
+      properties:
+        visit_count:
+          description: Total number of visits/clicks for this link
+          type: integer
+      type: object
+    val.GetLinkVisitStatRespV:
+      properties:
+        code:
+          description: Response status code (200 indicates success)
+          type: integer
+        data:
+          $ref: '#/components/schemas/val.GetLinkVisitStatResp'
+        message:
+          description: Human-readable status message
+          type: string
+      type: object
+    val.GetTagsResp:
+      description: Get tags response payload
+      properties:
+        tags:
+          description: List of your available tags
+          items:
+            $ref: '#/components/schemas/val.TagInfo'
+          type: array
+          uniqueItems: false
+      type: object
+    val.GetTagsRespV:
+      properties:
+        code:
+          description: Response status code (200 indicates success)
+          type: integer
+        data:
+          $ref: '#/components/schemas/val.GetTagsResp'
+        message:
+          description: Human-readable status message
+          type: string
+      type: object
+    val.GetUsageResp:
+      description: Account usage statistics
+      properties:
+        api_count_day:
+          description: API calls made today
+          type: integer
+        api_count_day_limit:
+          description: Maximum API calls allowed per day
+          type: integer
+        api_count_month:
+          description: API calls made this month
+          type: integer
+        api_count_month_limit:
+          description: Maximum API calls allowed per month
+          type: integer
+        link_count_day:
+          description: Short links created today
+          type: integer
+        link_count_day_limit:
+          description: Maximum short links allowed per day
+          type: integer
+        link_count_month:
+          description: Short links created this month
+          type: integer
+        link_count_month_limit:
+          description: Maximum short links allowed per month
+          type: integer
+        qrcode_count_day:
+          description: QR codes generated today
+          type: integer
+        qrcode_count_day_limit:
+          description: Maximum QR codes allowed per day
+          type: integer
+        qrcode_count_month:
+          description: QR codes generated this month
+          type: integer
+        qrcode_count_month_limit:
+          description: Maximum QR codes allowed per month
+          type: integer
+        text_count_day:
+          description: Text shares created today
+          type: integer
+        text_count_day_limit:
+          description: Maximum text shares allowed per day
+          type: integer
+        text_count_month:
+          description: Text shares created this month
+          type: integer
+        text_count_month_limit:
+          description: Maximum text shares allowed per month
+          type: integer
+        upload_count_day:
+          description: Files uploaded today
+          type: integer
+        upload_count_day_limit:
+          description: Maximum file uploads allowed per day
+          type: integer
+        upload_count_month:
+          description: Files uploaded this month
+          type: integer
+        upload_count_month_limit:
+          description: Maximum file uploads allowed per month
+          type: integer
+        file_count:
+          description: Total uploaded files count
+          type: integer
+        storage_usage_mb:
+          description: Storage space used by uploaded files (in MB, rounded to 2 decimal places)
+          type: string
+        storage_usage_limit_mb:
+          description: Maximum storage space allowed (in MB, rounded to 2 decimal places, -1 means unlimited)
+          type: string
+      type: object
+    val.GetUsageRespV:
+      properties:
+        code:
+          description: Response status code (200 indicates success)
+          type: integer
+        data:
+          $ref: '#/components/schemas/val.GetUsageResp'
+        message:
+          description: Human-readable status message
+          type: string
+      type: object
+    val.TagInfo:
+      properties:
+        id:
+          description: Unique identifier for this tag
+          type: integer
+        name:
+          description: Display name of the tag
+          type: string
+      type: object
+    val.UpdateShortURLReq:
+      properties:
+        domain:
+          description: The domain where the short URL is hosted (e.g., "s.ee")
+          maxLength: 255
+          type: string
+        slug:
+          description: The slug of the short URL to update (e.g., "abc123")
+          maxLength: 255
+          type: string
+        target_url:
+          description: The new destination URL
+          maxLength: 2000
+          type: string
+        title:
+          description: The new title for this short link
+          maxLength: 255
+          type: string
+      required:
+        - domain
+        - slug
+        - target_url
+        - title
+      type: object
+    val.UpdateTextReq:
+      properties:
+        content:
+          description: The new text content (up to 2MB)
+          maxLength: 2097152
+          type: string
+        domain:
+          description: The domain where the text sharing is hosted (e.g., "fs.to")
+          maxLength: 255
+          type: string
+        slug:
+          description: The slug of the text sharing to update
+          maxLength: 255
+          type: string
+        title:
+          description: The new title for this text sharing
+          maxLength: 255
+          type: string
+      required:
+        - content
+        - domain
+        - slug
+        - title
+      type: object
+    val.UploadFileRespData:
+      description: File upload response
+      properties:
+        created_at:
+          description: File upload timestamp (for upload history only)
+          type: integer
+        delete:
+          description: URL to delete this file
+          type: string
+        file_id:
+          description: Unique identifier for this file
+          type: integer
+        filename:
+          description: Original filename as uploaded
+          type: string
+        hash:
+          description: Delete key required to remove this file
+          type: string
+        height:
+          description: Image height in pixels (for image files only)
+          type: integer
+        page:
+          description: Web page URL where this file can be viewed
+          type: string
+        path:
+          description: Storage path of the file
+          type: string
+        size:
+          description: File size in bytes
+          type: integer
+        storename:
+          description: Filename in storage
+          type: string
+        upload_status:
+          description: Upload status code (1 = success)
+          type: integer
+        url:
+          description: Direct URL to access/download this file
+          type: string
+        width:
+          description: Image width in pixels (for image files only)
+          type: integer
+      type: object
+    val.UploadFileRespV:
+      properties:
+        code:
+          description: Response status code (200 indicates success)
+          type: integer
+        data:
+          $ref: '#/components/schemas/val.UploadFileRespData'
+        message:
+          description: Human-readable status message
+          type: string
+      type: object
+    val.GetFileHistoryRespV:
+      properties:
+        code:
+          description: Response status code
+          type: string
+        data:
+          description: List of uploaded files
+          items:
+            $ref: '#/components/schemas/val.UploadFileRespData'
+          type: array
+        message:
+          description: Human-readable status message
+          type: string
+        success:
+          description: Request status
+          type: boolean
+      type: object
+    val.GetPrivateFileURLRespData:
+      description: Private file download URL response data
+      properties:
+        file_id:
+          description: File ID
+          type: integer
+        url:
+          description: Temporary download URL (valid for a limited time)
+          type: string
+        expires_at:
+          description: URL expiration time (unix timestamp)
+          type: integer
+      type: object
+    val.GetPrivateFileURLRespV:
+      properties:
+        code:
+          description: Response status code (200 indicates success)
+          type: integer
+        message:
+          description: Human-readable status message
+          type: string
+        data:
+          $ref: '#/components/schemas/val.GetPrivateFileURLRespData'
+        success:
+          description: Success flag
+          type: boolean
+      type: object
+  securitySchemes:
+    ApiKeyAuth:
+      in: header
+      name: Authorization
+      type: apiKey
+externalDocs:
+  description: ""
+  url: ""
+info:
+  description: 'Welcome to the S.EE API documentation! This API enables you to programmatically create and manage short URLs, share text content, and track link analytics.<br><br><b>Quick Start:</b><br>1. Get your API key from the S.EE dashboard<br>2. Include it in the Authorization header for all requests<br>3. All responses are in JSON format with "code" and "message" fields<br><br><b>Response Codes:</b><br>- 200: Success<br>- 400: Invalid request parameters<br>- 401: Missing or expired API key<br>- 500: Server error'
+  title: S.EE API
+  version: "1.0"
+openapi: 3.1.0
+paths:
+  /api/v1/domains:
+    get:
+      description: Returns a list of all domains available for creating short URLs with your account. Use these domain values when calling the Create Short URL endpoint.
+      operationId: GetAvailableDomains
+      parameters:
+        - description: Your API key
+          in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/val.GetAvailableDomainsRespV'
+          description: OK
+      summary: Get Available Domains for Short URLs
+      tags:
+        - Short URLs
+  /api/v1/file/delete/{hash}:
+    get:
+      description: This API allows you to delete a file using its delete key.
+      operationId: DeleteFile
+      parameters:
+        - description: Delete Key
+          in: path
+          name: hash
+          required: true
+          schema:
+            type: string
+        - description: API key
+          in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/val.DeleteFileResp'
+          description: OK
+      summary: Delete File
+      tags:
+        - File
+  /api/v1/file/domains:
+    get:
+      description: Returns a list of all domains available for creating file sharing URLs with your account. Use these domain values when calling the File Upload endpoint.
+      operationId: GetFileAvailableDomains
+      parameters:
+        - description: Your API key
+          in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/val.GetAvailableDomainsRespV'
+          description: OK
+      summary: Get Available Domains for File Sharing
+      tags:
+        - File
+  /api/v1/file/private/download-url:
+    get:
+      description: This API allows you to get a temporary download URL for a private file using its file ID. The URL is cached for a period of time, so multiple requests for the same file will return the same URL. The URL is valid for 1 hour.
+      operationId: GetPrivateFileDownloadURL
+      parameters:
+        - description: File ID
+          in: query
+          name: file_id
+          required: true
+          schema:
+            type: integer
+        - description: API key
+          in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/val.GetPrivateFileURLRespV'
+          description: OK
+      summary: Get Private File Download URL
+      tags:
+        - File
+  /api/v1/file/upload:
+    post:
+      description: This API allows you to upload a file and create a short link for it.
+      operationId: UploadFile
+      parameters:
+        - description: API key
+          in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: The file to be uploaded (alias 'smfile')
+                domain:
+                  type: string
+                  description: The domain to be used for the short link
+                custom_slug:
+                  type: string
+                  description: Your preferred custom slug (e.g., 'my-link'). If not provided, a random slug will be generated.
+                is_private:
+                  type: integer
+                  description: Whether this file should be private (0 = public, 1 = private).
+                  enum: [0, 1]
+                  default: 0
+              required:
+                - file
+        description: Upload a file using multipart/form-data. The file field is required, domain, custom_slug, and is_private are optional.
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/val.UploadFileRespV'
+          description: OK
+      summary: Upload File
+      tags:
+        - File
+  /api/v1/files:
+    get:
+      description: Returns a paginated list of uploaded files for the authenticated user. This API is compatible with sm.ms upload_history endpoint and returns 30 files per page sorted by creation time in descending order.
+      operationId: GetFileHistory
+      parameters:
+        - description: API key
+          in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+        - description: Page number (default 1)
+          in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/val.GetFileHistoryRespV'
+          description: OK
+      summary: Get File Upload History
+      tags:
+        - File
+  /api/v1/link/visit-stat:
+    get:
+      description: Retrieves click/visit statistics for a specific short URL. You can get daily, monthly, or all-time statistics by specifying the period parameter.
+      operationId: GetLinkVisitStat
+      parameters:
+        - description: Your API key
+          in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+        - description: The domain of the short URL (e.g., s.ee)
+          in: query
+          name: domain
+          required: true
+          schema:
+            type: string
+        - description: The slug of the short URL (e.g., abc123)
+          in: query
+          name: slug
+          required: true
+          schema:
+            type: string
+        - description: 'Statistics time range: daily (today), monthly (this month), or totally (all-time, default)'
+          in: query
+          name: period
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/val.GetLinkVisitStatRespV'
+          description: OK
+      summary: Get Link Visit Statistics
+      tags:
+        - Short URLs
+  /api/v1/shorten:
+    delete:
+      description: Permanently deletes a short URL. This action cannot be undone. The slug will become available for reuse after deletion.
+      operationId: DeleteShortUrl
+      parameters:
+        - description: Your API key
+          in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/val.DeleteShortURLReq'
+        description: Short URL identification
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/httper.RespBody'
+          description: OK
+      summary: Delete Short URL
+      tags:
+        - Short URLs
+    get:
+      description: A simplified way to create short URLs using query parameters instead of a JSON body. Ideal for quick integrations, bookmarklets, or when you need a plain text response. Set json=true for JSON response format.
+      operationId: CreateShortUrlSimpleMode
+      parameters:
+        - description: Your API key
+          in: query
+          name: signature
+          required: true
+          schema:
+            type: string
+        - description: The destination URL to shorten (required)
+          in: query
+          name: url
+          required: true
+          schema:
+            type: string
+        - description: Domain for the short URL (optional, uses default if omitted)
+          in: query
+          name: domain
+          schema:
+            type: string
+        - description: Your preferred custom slug (optional)
+          in: query
+          name: custom_slug
+          schema:
+            type: string
+        - description: A descriptive title for this link (optional)
+          in: query
+          name: title
+          schema:
+            type: string
+        - description: Tag IDs to categorize this link (optional)
+          in: query
+          name: tag_ids
+          schema:
+            items:
+              type: integer
+            type: array
+        - description: Password to protect this link (optional)
+          in: query
+          name: password
+          schema:
+            type: string
+        - description: Unix timestamp when this link should expire (optional)
+          in: query
+          name: expire_at
+          schema:
+            type: integer
+        - description: Set to true to receive JSON response instead of plain text
+          in: query
+          name: json
+          schema:
+            type: boolean
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/val.CreateShortURLRespV'
+          description: OK
+      summary: Create Short URL (Simple Mode)
+      tags:
+        - Short URLs
+    post:
+      description: Creates a new short URL for your destination link. You can optionally specify a custom slug, password protection, expiration time, and tags for organization.
+      operationId: CreateShortUrl
+      parameters:
+        - description: Your API key
+          in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/val.CreateShortURLReq'
+        description: Short URL configuration
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/val.CreateShortURLRespV'
+          description: OK
+      summary: Create Short URL
+      tags:
+        - Short URLs
+    put:
+      description: Updates the destination URL and/or title of an existing short URL. The domain and slug identify which link to update.
+      operationId: UpdateShortUrl
+      parameters:
+        - description: Your API key
+          in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/val.UpdateShortURLReq'
+        description: Updated short URL details
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/httper.RespBody'
+          description: OK
+      summary: Update Short URL
+      tags:
+        - Short URLs
+  /api/v1/tags:
+    get:
+      description: Returns all tags you have created. Tags help organize your short URLs and shared texts into categories for easier management.
+      operationId: GetTags
+      parameters:
+        - description: Your API key
+          in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/data'
+                properties:
+                  code:
+                    description: Response status code (200 indicates success)
+                    type: integer
+                  data:
+                    description: Response payload
+                  message:
+                    description: Human-readable status message
+                    type: string
+                type: object
+          description: OK
+      summary: Get All Tags
+      tags:
+        - Tags
+  /api/v1/text:
+    delete:
+      description: Permanently deletes a text sharing. This action cannot be undone. The slug will become available for reuse after deletion.
+      operationId: DeleteText
+      parameters:
+        - description: Your API key
+          in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/val.DeleteTextReq'
+        description: Text sharing identification
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/httper.RespBody'
+          description: OK
+      summary: Delete Text Sharing
+      tags:
+        - Text Sharing
+    post:
+      description: Creates a shareable text snippet with a unique URL. Perfect for sharing code, notes, or any text content. Supports plain text, source code (with syntax highlighting), and Markdown formatting.
+      operationId: CreateText
+      parameters:
+        - description: Your API key
+          in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/val.CreateTextReq'
+        description: Text content and settings
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/val.CreateTextRespV'
+          description: OK
+      summary: Create Text Sharing
+      tags:
+        - Text Sharing
+    put:
+      description: Updates the content and/or title of an existing text sharing. The domain and slug identify which text to update.
+      operationId: UpdateText
+      parameters:
+        - description: Your API key
+          in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/val.UpdateTextReq'
+        description: Updated text content and settings
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/httper.RespBody'
+          description: OK
+      summary: Update Text Sharing
+      tags:
+        - Text Sharing
+  /api/v1/text/domains:
+    get:
+      description: Returns a list of all domains available for creating text sharing URLs with your account. Use these domain values when calling the Create Text Sharing endpoint.
+      operationId: GetTextAvailableDomains
+      parameters:
+        - description: Your API key
+          in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/val.GetAvailableDomainsRespV'
+          description: OK
+      summary: Get Available Domains for Text Sharing
+      tags:
+        - Text Sharing
+  /api/v1/usage:
+    get:
+      description: This API allows you to get the usage of the short link service.
+      operationId: GetUsage
+      parameters:
+        - description: Your API key
+          in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/val.GetUsageRespV'
+          description: OK
+      summary: Get Usage
+      tags:
+        - Short URLs
+servers:
+  - url: https://s.ee

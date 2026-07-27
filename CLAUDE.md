@@ -26,10 +26,13 @@ Tests use `setupTestClient(t)` as a shared helper that reads env vars and calls 
 
 ## Architecture
 
-Four source files, single package (`seesdk`), flat structure:
+Seven source files, single package (`seesdk`), flat structure:
 
-- **`client.go`** — `Client` struct, `Config`, `NewClient()` constructor, and private HTTP helpers (`doRequest` for JSON, `doMultipartRequest` for file uploads). Auth is done by setting the `Authorization` header directly (not Bearer prefix).
-- **`api.go`** — All 14 public methods on `Client` (CRUD for short URLs, text, files; read-only for domains, tags, usage, file history). Uses a generic `unmarshalResponse[T]` helper for JSON deserialization.
+- **`client.go`** — `Client` struct, `Config`, `NewClient()` constructor, `Version` constant, and private HTTP helpers (`doRequest` for JSON, `doMultipartRequest` for file uploads, shared `do` for header injection and response handling). Auth is done by setting the `Authorization` header directly (not Bearer prefix). A `User-Agent: see-go-sdk/<version>` header is sent on every request.
+- **`api.go`** — Core public methods on `Client` (CRUD for short URLs, text, files; read-only for domains, tags, usage, visit stats, link/text/file history, private file download URLs; token check). Uses a generic `callAPI[T]` helper that combines request execution and JSON deserialization, plus `pagedEndpoint` for paginated GET endpoints and `readerSize` for size detection via `Stat()`/`Len()`. `SmartUploadFile` auto-switches between regular multipart upload (≤100MB) and TUS large file upload based on detected size.
+- **`largefile.go`** — Large file upload support (up to 5GB) via the TUS 1.0 resumable protocol: `CreateLargeFileUpload`, `UploadLargeFileChunk` (PATCH), `GetLargeFileUploadOffset` (HEAD), `GetLargeFileUploadProgress`, `CompleteLargeFileUpload`, `CancelLargeFileUpload`, and the one-call `UploadLargeFile` convenience (handles fast/deduplicated uploads via `file_hash`). Private `doTUS` helper sets `Tus-Resumable: 1.0.0` and common headers.
+- **`bio.go`** — Bio page methods: `CreateBioPage`, `UpdateBioPage`, `DeleteBioPage`, `GetBioPageHistory`.
+- **`qrcode.go`** — QR code methods: `CreateQRCode`, `DeleteQRCode`, `GetQRCodeHistory`.
 - **`models.go`** — Request/response structs with JSON tags. Responses follow a common `{code, data, message}` envelope pattern. `UploadFileData` is a shared named struct used by both `UploadFileResponse` and `GetFileHistoryResponse`.
 - **`client_test.go`** — Integration tests covering the full API surface. Test fixtures live in `testdata/`.
 
@@ -40,17 +43,38 @@ Four source files, single package (`seesdk`), flat structure:
 | `CreateShortURL` | POST | `/shorten` |
 | `UpdateShortURL` | PUT | `/shorten` |
 | `DeleteShortURL` | DELETE | `/shorten` |
+| `GetLinkVisitStat` | GET | `/link/visit-stat` |
 | `CreateText` | POST | `/text` |
 | `UpdateText` | PUT | `/text` |
 | `DeleteText` | DELETE | `/text` |
 | `UploadFile` | POST (multipart) | `/file/upload` |
+| `SmartUploadFile` | — | delegates to `UploadFile` or `UploadLargeFile` by size |
+| `CreateLargeFileUpload` | POST | `/file/large-file/create` |
+| `UploadLargeFileChunk` | PATCH (TUS) | `/file/large-file-tus/:upload_id` |
+| `GetLargeFileUploadOffset` | HEAD (TUS) | `/file/large-file-tus/:upload_id` |
+| `GetLargeFileUploadProgress` | GET | `/file/large-file/progress` |
+| `CompleteLargeFileUpload` | POST | `/file/large-file/complete` |
+| `CancelLargeFileUpload` | DELETE | `/file/large-file/cancel` |
 | `GetFileHistory` | GET | `/files` |
 | `DeleteFile` | GET | `/file/delete/:key` |
+| `GetPrivateFileDownloadURL` | GET | `/file/private/download-url` |
 | `GetDomains` | GET | `/domains` |
 | `GetFileDomains` | GET | `/file/domains` |
 | `GetTextDomains` | GET | `/text/domains` |
 | `GetTags` | GET | `/tags` |
 | `GetUsage` | GET | `/usage` |
+| `GetLinkHistory` | GET | `/links` |
+| `GetTextHistory` | GET | `/texts` |
+| `CheckToken` | POST | `/token/check` |
+| `CreateBioPage` | POST | `/bio` |
+| `UpdateBioPage` | PUT | `/bio` |
+| `DeleteBioPage` | DELETE | `/bio` |
+| `GetBioPageHistory` | GET | `/bios` |
+| `CreateQRCode` | POST | `/qrcode` |
+| `DeleteQRCode` | DELETE | `/qrcode` |
+| `GetQRCodeHistory` | GET | `/qrcodes` |
+
+Not implemented: `GET /shorten` (simple mode) — a signature-in-query bookmarklet variant redundant with `CreateShortURL`.
 
 ## Conventions
 
@@ -59,8 +83,12 @@ Four source files, single package (`seesdk`), flat structure:
 - `doMultipartRequest` accepts a `fields map[string]string` for additional form fields (e.g. `is_private`, `domain`, `custom_slug`)
 - All public methods return `(*ResponseType, error)`
 - Errors are wrapped with `fmt.Errorf("context: %w", err)`
-- File uploads are capped at 100MB (`checkFileSize` validates via `Stat()` or `Len()` interface)
+- File uploads are capped at 100MB (`checkFileSize` validates via `Stat()` or `Len()` interface); large file uploads are capped at 5GB (`maxLargeFileSize`)
 - `UsageNoLimit = -1` sentinel for unlimited usage quotas
+- `VisitStatPeriod*` constants for `GetLinkVisitStat` period values (`daily`, `monthly`, `totally`)
+- `LargeFileUploadStatus*` constants for upload session status (1=uploading, 2=completed, 3=failed, 4=cancelled)
+- Paginated GET endpoints (`/files`, `/links`, `/texts`, `/bios`, `/qrcodes`) share the `pagedEndpoint` helper; page ≤ 1 means first page
+- SDK version lives in the `Version` constant in `client.go`; keep it in sync with git tags
 
 ## EditorConfig
 

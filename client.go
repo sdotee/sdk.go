@@ -9,7 +9,7 @@
 // File Created: 2025-11-28 11:21:45
 //
 // Modified By: S.EE Development Team <dev@s.ee>
-// Last Modified: 2025-12-04 18:00:16
+// Last Modified: 2026-07-27 12:00:00
 //
 
 package seesdk
@@ -23,6 +23,9 @@ import (
 	"net/http"
 	"time"
 )
+
+// Version is the current version of the SDK.
+const Version = "1.5.0"
 
 const DefaultBaseURL = "https://s.ee/api/v1"
 const DefaultTimeout = 30 * time.Second
@@ -59,7 +62,7 @@ func NewClient(config Config) *Client {
 	}
 }
 
-// doRequest executes an HTTP request and returns the response body.
+// doRequest executes a JSON HTTP request and returns the response body.
 func (c *Client) doRequest(method, endpoint string, body any) ([]byte, error) {
 	var reqBody io.Reader
 	if body != nil {
@@ -70,33 +73,13 @@ func (c *Client) doRequest(method, endpoint string, body any) ([]byte, error) {
 		reqBody = bytes.NewBuffer(jsonData)
 	}
 
-	url := c.BaseURL + endpoint
-	req, err := http.NewRequest(method, url, reqBody)
+	req, err := http.NewRequest(method, c.BaseURL+endpoint, reqBody)
 	if err != nil {
 		return nil, fmt.Errorf("create request: %w", err)
 	}
-
 	req.Header.Set("Content-Type", "application/json")
-	if c.APIKey != "" {
-		req.Header.Set("Authorization", c.APIKey)
-	}
 
-	resp, err := c.HTTPClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("execute request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("read response: %w", err)
-	}
-
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(respBody))
-	}
-
-	return respBody, nil
+	return c.do(req)
 }
 
 // doMultipartRequest executes a multipart HTTP request.
@@ -126,13 +109,18 @@ func (c *Client) doMultipartRequest(endpoint string, fieldName, filename string,
 		}
 	}()
 
-	url := c.BaseURL + endpoint
-	req, err := http.NewRequest("POST", url, pr)
+	req, err := http.NewRequest("POST", c.BaseURL+endpoint, pr)
 	if err != nil {
 		return nil, fmt.Errorf("create request: %w", err)
 	}
-
 	req.Header.Set("Content-Type", writer.FormDataContentType())
+
+	return c.do(req)
+}
+
+// do sets common headers, executes the request, and returns the response body.
+func (c *Client) do(req *http.Request) ([]byte, error) {
+	req.Header.Set("User-Agent", "see-go-sdk/"+Version)
 	if c.APIKey != "" {
 		req.Header.Set("Authorization", c.APIKey)
 	}
