@@ -17,7 +17,10 @@ go test -v ./...                            # Verbose test output
 
 ## Testing
 
-All tests are **integration tests** that hit the live S.EE API. They require environment variables:
+Tests are split into two files:
+
+- **`unit_test.go`** — Offline unit tests against a `httptest` mock server (helpers, header injection, upload routing, TUS chunk flow, validation). Always run; no credentials needed.
+- **`client_test.go`** — Integration tests that hit the live S.EE API. They require environment variables:
 
 - `SEE_API_KEY` (required) — tests skip gracefully if not set
 - `SEE_BASE_URL` (optional) — defaults to `https://s.ee/api/v1`
@@ -26,15 +29,16 @@ Tests use `setupTestClient(t)` as a shared helper that reads env vars and calls 
 
 ## Architecture
 
-Seven source files, single package (`seesdk`), flat structure:
+Single package (`seesdk`), flat structure:
 
-- **`client.go`** — `Client` struct, `Config`, `NewClient()` constructor, `Version` constant, and private HTTP helpers (`doRequest` for JSON, `doMultipartRequest` for file uploads, shared `do` for header injection and response handling). Auth is done by setting the `Authorization` header directly (not Bearer prefix). A `User-Agent: see-go-sdk/<version>` header is sent on every request.
+- **`client.go`** — `Client` struct, `Config`, `NewClient()` constructor, `Version` constant, and private HTTP helpers (`doRequest` for JSON, `doMultipartRequest` for file uploads, shared `do`/`setCommonHeaders` for header injection and response handling). Auth is done by setting the `Authorization` header directly (not Bearer prefix). A `User-Agent: see-go-sdk/<version>` header (the `userAgent` constant) is sent on every request.
 - **`api.go`** — Core public methods on `Client` (CRUD for short URLs, text, files; read-only for domains, tags, usage, visit stats, link/text/file history, private file download URLs; token check). Uses a generic `callAPI[T]` helper that combines request execution and JSON deserialization, plus `pagedEndpoint` for paginated GET endpoints and `readerSize` for size detection via `Stat()`/`Len()`. `SmartUploadFile` auto-switches between regular multipart upload (≤100MB) and TUS large file upload based on detected size.
 - **`largefile.go`** — Large file upload support (up to 5GB) via the TUS 1.0 resumable protocol: `CreateLargeFileUpload`, `UploadLargeFileChunk` (PATCH), `GetLargeFileUploadOffset` (HEAD), `GetLargeFileUploadProgress`, `CompleteLargeFileUpload`, `CancelLargeFileUpload`, and the one-call `UploadLargeFile` convenience (handles fast/deduplicated uploads via `file_hash`). Private `doTUS` helper sets `Tus-Resumable: 1.0.0` and common headers.
 - **`bio.go`** — Bio page methods: `CreateBioPage`, `UpdateBioPage`, `DeleteBioPage`, `GetBioPageHistory`.
 - **`qrcode.go`** — QR code methods: `CreateQRCode`, `DeleteQRCode`, `GetQRCodeHistory`.
 - **`models.go`** — Request/response structs with JSON tags. Responses follow a common `{code, data, message}` envelope pattern. `UploadFileData` is a shared named struct used by both `UploadFileResponse` and `GetFileHistoryResponse`.
 - **`client_test.go`** — Integration tests covering the full API surface. Test fixtures live in `testdata/`.
+- **`unit_test.go`** — Offline unit tests using `httptest` mock servers; run without any credentials.
 
 ## API Endpoints Mapped to Methods
 
@@ -82,8 +86,8 @@ Not implemented: `GET /shorten` (simple mode) — a signature-in-query bookmarkl
 - JSON request structs use `json:"field_name,omitempty"` tags; multipart requests (e.g. `UploadFileRequest`) use plain Go fields without JSON tags
 - `doMultipartRequest` accepts a `fields map[string]string` for additional form fields (e.g. `is_private`, `domain`, `custom_slug`)
 - All public methods return `(*ResponseType, error)`
-- Errors are wrapped with `fmt.Errorf("context: %w", err)`
-- File uploads are capped at 100MB (`checkFileSize` validates via `Stat()` or `Len()` interface); large file uploads are capped at 5GB (`maxLargeFileSize`)
+- Errors are wrapped with `fmt.Errorf("context: %w", err)`; the shared `errNilFile` sentinel is returned for nil upload readers
+- File uploads are capped at 100MB (`maxUploadFileSize`, validated via `readerSize` which checks `Stat()`/`Len()`); large file uploads are capped at 5GB (`maxLargeFileSize`)
 - `UsageNoLimit = -1` sentinel for unlimited usage quotas
 - `VisitStatPeriod*` constants for `GetLinkVisitStat` period values (`daily`, `monthly`, `totally`)
 - `LargeFileUploadStatus*` constants for upload session status (1=uploading, 2=completed, 3=failed, 4=cancelled)

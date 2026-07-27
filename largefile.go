@@ -47,7 +47,7 @@ const (
 // data transfer is needed.
 func (c *Client) CreateLargeFileUpload(req CreateLargeFileUploadRequest) (*CreateLargeFileUploadResponse, error) {
 	if req.FileSize <= 0 {
-		return nil, fmt.Errorf("file size must be positive")
+		return nil, errors.New("file size must be positive")
 	}
 	if req.FileSize > maxLargeFileSize {
 		return nil, fmt.Errorf("file size exceeds the limit of %d bytes", int64(maxLargeFileSize))
@@ -125,7 +125,7 @@ func (c *Client) UploadLargeFileChunk(uploadID string, offset int64, chunk []byt
 // existing file record is returned.
 func (c *Client) UploadLargeFile(req CreateLargeFileUploadRequest, r io.Reader) (*CompleteLargeFileUploadResponse, error) {
 	if r == nil {
-		return nil, fmt.Errorf("file is nil")
+		return nil, errNilFile
 	}
 
 	createResp, err := c.CreateLargeFileUpload(req)
@@ -174,10 +174,7 @@ func (c *Client) tusEndpoint(uploadID string) string {
 // response status. The caller must close the response body on success.
 func (c *Client) doTUS(req *http.Request) (*http.Response, error) {
 	req.Header.Set("Tus-Resumable", tusProtocolVersion)
-	req.Header.Set("User-Agent", "see-go-sdk/"+Version)
-	if c.APIKey != "" {
-		req.Header.Set("Authorization", c.APIKey)
-	}
+	c.setCommonHeaders(req)
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
