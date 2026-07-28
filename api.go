@@ -16,11 +16,15 @@ package seesdk
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/url"
 	"os"
 )
+
+// errNilFile is returned when an upload is attempted with a nil reader.
+var errNilFile = errors.New("file is nil")
 
 // UsageNoLimit represents unlimited usage.
 const UsageNoLimit = -1
@@ -122,11 +126,11 @@ func (c *Client) DeleteText(req DeleteTextRequest) (*DeleteTextResponse, error) 
 // UploadFile uploads a file to the server.
 func (c *Client) UploadFile(req UploadFileRequest) (*UploadFileResponse, error) {
 	if req.File == nil {
-		return nil, fmt.Errorf("file is nil")
+		return nil, errNilFile
 	}
 
-	if err := checkFileSize(req.File, maxUploadFileSize); err != nil {
-		return nil, err
+	if size, ok := readerSize(req.File); ok && size > maxUploadFileSize {
+		return nil, fmt.Errorf("file size exceeds the limit of %d bytes", int64(maxUploadFileSize))
 	}
 
 	fields := make(map[string]string)
@@ -155,7 +159,7 @@ func (c *Client) UploadFile(req UploadFileRequest) (*UploadFileResponse, error) 
 // is used.
 func (c *Client) SmartUploadFile(req UploadFileRequest) (*UploadFileResponse, error) {
 	if req.File == nil {
-		return nil, fmt.Errorf("file is nil")
+		return nil, errNilFile
 	}
 
 	size, ok := readerSize(req.File)
@@ -246,12 +250,4 @@ func readerSize(r io.Reader) (int64, bool) {
 		return int64(l.Len()), true
 	}
 	return 0, false
-}
-
-// checkFileSize checks if the file size exceeds the maximum allowed size.
-func checkFileSize(file io.Reader, maxSize int64) error {
-	if size, ok := readerSize(file); ok && size > maxSize {
-		return fmt.Errorf("file size exceeds the limit of %d bytes", maxSize)
-	}
-	return nil
 }

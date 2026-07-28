@@ -30,6 +30,9 @@ const Version = "1.5.0"
 const DefaultBaseURL = "https://s.ee/api/v1"
 const DefaultTimeout = 30 * time.Second
 
+// userAgent is the User-Agent header value sent with every request.
+const userAgent = "see-go-sdk/" + Version
+
 // Client represents the SEE SDK client for short URL operations
 type Client struct {
 	BaseURL    string
@@ -118,12 +121,17 @@ func (c *Client) doMultipartRequest(endpoint string, fieldName, filename string,
 	return c.do(req)
 }
 
-// do sets common headers, executes the request, and returns the response body.
-func (c *Client) do(req *http.Request) ([]byte, error) {
-	req.Header.Set("User-Agent", "see-go-sdk/"+Version)
+// setCommonHeaders sets the headers shared by every API request.
+func (c *Client) setCommonHeaders(req *http.Request) {
+	req.Header.Set("User-Agent", userAgent)
 	if c.APIKey != "" {
 		req.Header.Set("Authorization", c.APIKey)
 	}
+}
+
+// do sets common headers, executes the request, and returns the response body.
+func (c *Client) do(req *http.Request) ([]byte, error) {
+	c.setCommonHeaders(req)
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
