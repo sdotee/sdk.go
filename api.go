@@ -21,6 +21,7 @@ import (
 	"io"
 	"net/url"
 	"os"
+	"strings"
 )
 
 // errNilFile is returned when an upload is attempted with a nil reader.
@@ -45,14 +46,27 @@ func callAPI[T any](c *Client, method, endpoint string, body any) (*T, error) {
 	if err != nil {
 		return nil, err
 	}
-	return unmarshalResponse[T](respBody)
+	response, err := unmarshalResponse[T](respBody)
+	if err != nil {
+		return nil, fmt.Errorf("decode response for %s %s: %w", method, endpoint, err)
+	}
+	return response, nil
 }
 
 // unmarshalResponse unmarshals an API response body into T.
 func unmarshalResponse[T any](data []byte) (*T, error) {
+	trimmed := strings.TrimSpace(string(data))
+	if trimmed == "" {
+		return nil, errors.New("decode API response: expected JSON but received an empty response")
+	}
+	lowerBody := strings.ToLower(trimmed)
+	if strings.HasPrefix(lowerBody, "<!doctype html") || strings.HasPrefix(lowerBody, "<html") {
+		return nil, errors.New("decode API response: expected JSON but received HTML")
+	}
+
 	var response T
 	if err := json.Unmarshal(data, &response); err != nil {
-		return nil, fmt.Errorf("unmarshal response: %w", err)
+		return nil, fmt.Errorf("decode API response: invalid JSON: %w", err)
 	}
 	return &response, nil
 }
@@ -148,7 +162,11 @@ func (c *Client) UploadFile(req UploadFileRequest) (*UploadFileResponse, error) 
 	if err != nil {
 		return nil, err
 	}
-	return unmarshalResponse[UploadFileResponse](respBody)
+	response, err := unmarshalResponse[UploadFileResponse](respBody)
+	if err != nil {
+		return nil, fmt.Errorf("decode response for POST /file/upload: %w", err)
+	}
+	return response, nil
 }
 
 // SmartUploadFile uploads a file choosing the best strategy automatically:
