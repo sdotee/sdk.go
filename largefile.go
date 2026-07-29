@@ -182,9 +182,14 @@ func (c *Client) doTUS(req *http.Request) (*http.Response, error) {
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		body, _ := io.ReadAll(resp.Body)
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, maxErrorResponseSize))
 		resp.Body.Close()
-		return nil, fmt.Errorf("TUS error (status %d): %s", resp.StatusCode, string(body))
+		return nil, &APIError{
+			Method:     req.Method,
+			Endpoint:   req.URL.RequestURI(),
+			StatusCode: resp.StatusCode,
+			Message:    responseErrorMessage(resp.Header.Get("Content-Type"), body),
+		}
 	}
 	return resp, nil
 }

@@ -21,6 +21,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -29,6 +30,8 @@ const Version = "1.5.0"
 
 const DefaultBaseURL = "https://s.ee/api/v1"
 const DefaultTimeout = 30 * time.Second
+
+const maxErrorResponseSize = 64 * 1024
 
 // userAgent is the User-Agent header value sent with every request.
 const userAgent = "see-go-sdk/" + Version
@@ -45,6 +48,18 @@ type Config struct {
 	BaseURL string
 	APIKey  string
 	Timeout time.Duration
+}
+
+// APIError describes a non-successful HTTP response from the API.
+type APIError struct {
+	Method     string
+	Endpoint   string
+	StatusCode int
+	Message    string
+}
+
+func (e *APIError) Error() string {
+	return fmt.Sprintf("API request %s %s failed (status %d): %s", e.Method, e.Endpoint, e.StatusCode, e.Message)
 }
 
 // NewClient creates a new SEE SDK client with the given configuration.
@@ -139,14 +154,55 @@ func (c *Client) do(req *http.Request) ([]byte, error) {
 	}
 	defer resp.Body.Close()
 
-	respBody, err := io.ReadAll(resp.Body)
+	var responseReader io.Reader = resp.Body
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		responseReader = io.LimitReader(resp.Body, maxErrorResponseSize)
+	}
+	respBody, err := io.ReadAll(responseReader)
 	if err != nil {
 		return nil, fmt.Errorf("read response: %w", err)
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(respBody))
+		return nil, &APIError{
+			Method:     req.Method,
+			Endpoint:   req.URL.RequestURI(),
+			StatusCode: resp.StatusCode,
+			Message:    responseErrorMessage(resp.Header.Get("Content-Type"), respBody),
+		}
 	}
 
 	return respBody, nil
+}
+
+func responseErrorMessage(contentType string, body []byte) string {
+	var payload struct {
+		Message string `json:"message"`
+		Error   string `json:"error"`
+	}
+	if json.Unmarshal(body, &payload) == nil {
+		if payload.Message != "" {
+			return payload.Message
+		}
+		if payload.Error != "" {
+			return payload.Error
+		}
+	}
+
+	trimmed := strings.TrimSpace(string(body))
+	lowerBody := strings.ToLower(trimmed)
+	if strings.Contains(strings.ToLower(contentType), "text/html") ||
+		strings.HasPrefix(lowerBody, "<!doctype html") || strings.HasPrefix(lowerBody, "<html") {
+		return "server returned HTML instead of the expected JSON response"
+	}
+	if trimmed == "" {
+		return "server returned an empty response"
+	}
+
+	message := strings.Join(strings.Fields(trimmed), " ")
+	const maxErrorMessageLength = 200
+	if len(message) > maxErrorMessageLength {
+		message = message[:maxErrorMessageLength] + "..."
+	}
+	return message
 }
