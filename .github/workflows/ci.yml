@@ -31,7 +31,7 @@ jobs:
       fail-fast: false
       matrix:
         go:
-          - "1.21.x" # minimum supported version (go.mod)
+          - "1.26.x" # minimum supported version (go.mod)
           - stable
     steps:
       - name: Check out repository

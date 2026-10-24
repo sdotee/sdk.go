@@ -4,7 +4,7 @@ Guidance for AI coding agents working in this repository.
 
 ## Project Overview
 
-Go SDK for the [S.EE](https://s.ee) URL shortener service (`github.com/sdotee/sdk.go`). The package name is `seesdk`. It has **zero external dependencies** — only the Go standard library is used. Requires Go 1.21+.
+Go SDK for the [S.EE](https://s.ee) URL shortener service (`github.com/sdotee/sdk.go`). The package name is `seesdk`. It has **zero external dependencies** — only the Go standard library is used. Requires Go 1.26+.
 
 ## Repository Layout
 

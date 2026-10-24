@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Go SDK for the S.EE URL shortener service (`github.com/sdotee/sdk.go`). Package name is `seesdk`. Zero external dependencies — uses only the Go standard library. Requires Go 1.21+.
+Go SDK for the S.EE URL shortener service (`github.com/sdotee/sdk.go`). Package name is `seesdk`. Zero external dependencies — uses only the Go standard library. Requires Go 1.26+.
 
 ## Commands
 
