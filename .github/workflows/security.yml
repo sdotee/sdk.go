@@ -35,15 +35,15 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4.37.7
+        uses: github/codeql-action/init@v4.39.1
         with:
           languages: go
 
       - name: Autobuild
-        uses: github/codeql-action/autobuild@v4.37.7
+        uses: github/codeql-action/autobuild@v4.39.1
 
       - name: Perform CodeQL analysis
-        uses: github/codeql-action/analyze@v4.37.7
+        uses: github/codeql-action/analyze@v4.39.1
 
   govulncheck:
     name: Run govulncheck
